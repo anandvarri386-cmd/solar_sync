@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SolarSync AI - IoT Solar Pump Dashboard</title>
+    <meta name="description" content="Premium IoT Smart Solar DC Pump Monitoring & Control Dashboard. Built with Flask, SQLite, and Tailwind CSS.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%2300f5ff' d='M12 2.25a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-1.5 0V3a.75.75 0 0 1 .75-.75zM6.16 5.1a.75.75 0 0 1 1.06 0l1.59 1.59a.75.75 0 1 1-1.06 1.06L6.16 6.16a.75.75 0 0 1 0-1.06zm11.68 0a.75.75 0 0 1 0 1.06l-1.59 1.59a.75.75 0 1 1-1.06-1.06l1.59-1.59a.75.75 0 0 1 1.06 0zM3 11.25a.75.75 0 0 1 .75.75v.01a.75.75 0 0 1 0 1.5H3.75a.75.75 0 0 1-.75-.75v-.01a.75.75 0 0 1 .75-.75zm16.5 0a.75.75 0 0 1 .75.75v.01a.75.75 0 0 1 0 1.5h-.01a.75.75 0 0 1-.75-.75v-.01a.75.75 0 0 1 .75-.75zM6.16 17.84a.75.75 0 0 1 1.06 1.06l-1.59 1.59a.75.75 0 1 1-1.06-1.06l1.59-1.59zm11.68 0a.75.75 0 0 1 0 1.06l-1.59-1.59a.75.75 0 1 1 1.06-1.06l1.59 1.59zM12 18.75a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-1.5 0V19.5a.75.75 0 0 1 .75-.75zM12 7.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9z'/%3E%3C/svg%3E">
+    
+    <!-- Tailwind CSS v4 Play CDN -->
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <!-- GSAP for animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- Socket.io -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <!-- Custom Style Sheet with Multi-Theme Support -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body class="bg-grid-overlay">
+    
+    <!-- Premium Preloading Screen -->
+    <div id="loading-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[var(--bg-gradient-start)] transition-opacity duration-700">
+        <div class="relative flex flex-col items-center">
+            <!-- Rotating Solar Panel Icon -->
+            <div class="w-24 h-24 mb-6 flex items-center justify-center rounded-full bg-cyan-950/40 border border-cyan-500/30 glow-cyan">
+                <svg class="w-16 h-16 text-cyan-400 solar-icon-spin" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M3 12h18M5.22 5.22l13.56 13.56M18.78 5.22L5.22 18.78M12 12m-6 0a6 6 0 1 0 12 0 6 6 0 1 0-12 0Z"></path>
+                </svg>
+            </div>
+            
+            <h1 class="text-3xl font-extrabold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 mb-2 font-mono">
+                SOLARSYNC AI
+            </h1>
+            <p class="text-xs text-theme-muted tracking-widest uppercase mb-6">IoT Pump Grid Management</p>
+            
+            <!-- Gradient Progress Bar -->
+            <div class="w-64 h-2 theme-progress-track border border-white/5">
+                <div id="loading-bar" class="h-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <div id="loading-text" class="text-[10px] text-cyan-400 font-mono mt-2 uppercase tracking-widest">Initializing core...</div>
+        </div>
+    </div>
+
+    <!-- Layout Wrapper -->
+    <div class="flex min-h-screen relative">
+        
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 theme-sidebar backdrop-blur-xl transition-all duration-300 transform -translate-x-full md:translate-x-0 flex flex-col justify-between">
+            <div>
+                <!-- Sidebar Header / Logo -->
+                <div class="h-20 flex items-center px-6 border-b border-[var(--sidebar-border)]">
+                    <a href="/dashboard" class="flex items-center space-x-3">
+                        <i class="fa-solid fa-solar-panel text-2xl text-[var(--accent-cyan)] glow-cyan"></i>
+                        <span class="text-xl font-bold tracking-tight font-mono theme-brand-text">
+                            SolarSync <span class="text-xs text-[var(--accent-cyan)] px-1.5 py-0.5 border border-[var(--card-border-subtle)] rounded bg-[var(--card-bg-subtle)]">AI</span>
+                        </span>
+                    </a>
+                </div>
+                
+                <!-- Sidebar Menu Links -->
+                <nav class="mt-6 px-4 space-y-1.5">
+                    <a id="nav-dashboard" href="/dashboard" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                        <i class="fa-solid fa-chart-line w-6 text-lg"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a id="nav-live" href="/dashboard#live-monitoring" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                        <i class="fa-solid fa-tower-broadcast w-6 text-lg"></i>
+                        <span>Live Telemetry</span>
+                    </a>
+                    <a id="nav-analytics" href="/dashboard#analytics" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                        <i class="fa-solid fa-chart-line w-6 text-lg"></i>
+                        <span>Related Graphs</span>
+                    </a>
+                    <a id="nav-history" href="/history" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                        <i class="fa-solid fa-database w-6 text-lg"></i>
+                        <span>Historical Logs</span>
+                    </a>
+                    <a id="nav-settings" href="/settings" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                        <i class="fa-solid fa-sliders w-6 text-lg"></i>
+                        <span>Calibrations</span>
+                    </a>
+                    <a id="nav-about" href="/about" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                        <i class="fa-solid fa-circle-info w-6 text-lg"></i>
+                        <span>About Project</span>
+                    </a>
+                </nav>
+            </div>
+            
+            <!-- Sidebar Footer / Logout -->
+            <div class="p-4 theme-sidebar-footer">
+                <a href="/logout" class="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-red-950/20 border border-red-500/20 text-red-400 hover:bg-red-900/20 hover:text-red-300 rounded-xl text-xs font-semibold tracking-wider uppercase transition-all duration-300 btn-ripple">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Log Out</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Workspace (Displaces by 64px width on desktop) -->
+        <div class="flex-1 flex flex-col md:pl-64 min-w-0">
+            
+            <!-- Top Navigation Bar -->
+            <header class="h-20 theme-header backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-6">
+                <!-- Mobile sidebar toggle -->
+                <button onclick="toggleSidebar()" class="md:hidden p-2 text-theme-secondary hover:text-theme-primary transition-colors" id="btn-sidebar-toggle">
+                    <i class="fa-solid fa-bars-staggered text-xl"></i>
+                </button>
+                
+                <!-- Connection indicators & clocks -->
+                <div class="hidden sm:flex items-center space-x-4">
+                    <!-- Global Time/Clock -->
+                    <div class="flex items-center space-x-2 text-xs font-mono text-theme-secondary sub-card px-3.5 py-1.5">
+                        <i class="fa-regular fa-clock text-[var(--accent-cyan)]"></i>
+                        <span id="nav-clock-time" class="text-theme-primary font-semibold">00:00:00 AM</span>
+                        <span class="text-theme-muted">|</span>
+                        <span id="nav-clock-date">Aug 28, 2026</span>
+                    </div>
+                    
+                    <!-- Customer Pump Device Badge -->
+                    <div class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[var(--card-bg-subtle)] border border-[var(--card-border-subtle)] font-mono text-xs">
+                        <i class="fa-solid fa-microchip text-[var(--accent-cyan)]"></i>
+                        <span class="text-theme-secondary font-medium">Device:</span>
+                        <span class="text-[var(--accent-cyan)] font-bold">{{ current_user.pump_device_id if current_user else 'PUMP-SOLAR-1001' }}</span>
+                    </div>
+                </div>
+                
+                <!-- Status controls / Profiles / Themes -->
+                <div class="flex items-center space-x-3.5">
+                    <!-- ESP32 Online Tag -->
+                    <div id="esp32-status-tag" class="flex items-center space-x-1.5 px-3 py-1.5 bg-red-950/30 border border-red-500/20 text-red-400 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors duration-300">
+                        <span class="relative flex h-2 w-2">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                        </span>
+                        <span>ESP32 OFFLINE</span>
+                    </div>
+                    
+                    <!-- Socket status dot -->
+                    <div id="socket-status-indicator" title="Dashboard Server Connection Status" class="w-3.5 h-3.5 rounded-full bg-red-500 border-2 border-[var(--sidebar-bg)] glow-red animate-pulse" cursor="help"></div>
+                    
+                    <!-- Theme Selector Dropdown Trigger -->
+                    <div class="relative">
+                        <button onclick="toggleThemeMenu()" class="p-2.5 rounded-xl sub-card text-theme-secondary hover:text-theme-primary transition-all duration-300 flex items-center space-x-1.5" id="btn-theme-toggle" title="Switch Theme">
+                            <i id="theme-toggle-icon" class="fa-solid fa-moon text-[var(--accent-cyan)]"></i>
+                            <i class="fa-solid fa-chevron-down text-[9px] opacity-70"></i>
+                        </button>
+                        
+                        <!-- Theme Dropdown Menu -->
+                        <div id="theme-dropdown-menu" class="absolute right-0 mt-2 w-48 theme-modal-box p-2 space-y-1 hidden z-50 shadow-2xl">
+                            <div class="text-[10px] uppercase font-mono tracking-wider text-theme-muted px-3 py-1 border-b border-[var(--card-border-subtle)]">
+                                Select Theme
+                            </div>
+                            <button onclick="setTheme('dark'); toggleThemeMenu();" class="w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium text-theme-secondary hover:text-theme-primary hover:bg-[var(--card-bg-subtle)] transition-colors text-left" data-theme-select="dark">
+                                <i class="fa-solid fa-moon text-cyan-400 w-4"></i>
+                                <span>Obsidian Dark</span>
+                            </button>
+                            <button onclick="setTheme('light'); toggleThemeMenu();" class="w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium text-theme-secondary hover:text-theme-primary hover:bg-[var(--card-bg-subtle)] transition-colors text-left" data-theme-select="light">
+                                <i class="fa-solid fa-sun text-amber-500 w-4"></i>
+                                <span>Solar Light</span>
+                            </button>
+                            <button onclick="setTheme('emerald'); toggleThemeMenu();" class="w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium text-theme-secondary hover:text-theme-primary hover:bg-[var(--card-bg-subtle)] transition-colors text-left" data-theme-select="emerald">
+                                <i class="fa-solid fa-leaf text-emerald-400 w-4"></i>
+                                <span>Eco Emerald</span>
+                            </button>
+                            <button onclick="setTheme('sunset'); toggleThemeMenu();" class="w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium text-theme-secondary hover:text-theme-primary hover:bg-[var(--card-bg-subtle)] transition-colors text-left" data-theme-select="sunset">
+                                <i class="fa-solid fa-fire-flame-curved text-orange-400 w-4"></i>
+                                <span>Solar Sunset</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- User Profile & Logout -->
+                    <div class="flex items-center space-x-2.5 border-l border-[var(--card-border-subtle)] pl-4">
+                        <img src="https://api.dicebear.com/7.x/bottts/svg?seed={{ current_user.email if current_user else 'SolarSyncUser' }}&backgroundColor=0d1430" alt="Avatar" class="w-8 h-8 rounded-lg border border-[var(--accent-cyan)]/30 sub-card">
+                        <div class="hidden lg:block text-left leading-none">
+                            <div class="text-xs font-semibold text-theme-primary truncate max-w-[120px]">{{ current_user.name if current_user else 'Customer' }}</div>
+                            <div class="text-[9px] text-[var(--accent-cyan)] font-mono tracking-wider truncate max-w-[120px]">{{ current_user.email if current_user else 'Online' }}</div>
+                        </div>
+                        <a href="/logout" title="Log Out" class="p-2 rounded-lg sub-card text-theme-muted hover:text-red-400 transition-colors">
+                            <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+                        </a>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Work Content Page -->
+            <main class="flex-1 p-6 relative max-w-7xl mx-auto w-full">
+                {% block content %}{% endblock %}
+            </main>
+
+            <!-- Premium Footer -->
+            <footer class="mt-auto theme-footer backdrop-blur-md py-6 px-8 text-center text-xs text-theme-muted flex flex-col md:flex-row items-center justify-between">
+                <div>
+                    &copy; 2026 SolarSync Corporation. All rights reserved. Licensed for operations.
+                </div>
+                <div class="flex items-center space-x-4 mt-2 md:mt-0 font-mono text-[10px] tracking-wider">
+                    <span class="text-[var(--accent-cyan)]">SYSTEM LOG: V1.0.0-PRO</span>
+                    <span class="text-theme-muted">|</span>
+                    <a href="/about" class="text-theme-secondary hover:text-theme-primary transition-colors">Documentation</a>
+                    <span class="text-theme-muted">|</span>
+                    <a href="/settings" class="text-theme-secondary hover:text-theme-primary transition-colors">Calibration Control</a>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <!-- Toast notifications manager node -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col space-y-2.5 max-w-sm w-full pointer-events-none">
+        <!-- JS inserts Toasts here -->
+    </div>
+
+    <!-- Sidebar backdrop overlay (mobile only) -->
+    <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 z-35 bg-black/60 backdrop-blur-sm hidden transition-opacity duration-300"></div>
+
+    <!-- Scripts -->
+    <script src="/static/js/main.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

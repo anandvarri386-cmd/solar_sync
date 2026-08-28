@@ -1,0 +1,557 @@
+/* ==========================================================================
+   SolarSync AI - Modern Multi-Theme Glassmorphism & Neon Design System
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+
+/* --------------------------------------------------------------------------
+   Theme 1: Default Midnight Cyber (Dark)
+   -------------------------------------------------------------------------- */
+:root, [data-theme="dark"] {
+    --bg-gradient-start: #040714;
+    --bg-gradient-end: #0a0f29;
+    --mesh-glow-1: rgba(0, 245, 255, 0.12);
+    --mesh-glow-2: rgba(168, 85, 247, 0.08);
+
+    --sidebar-bg: rgba(7, 11, 30, 0.92);
+    --sidebar-footer-bg: rgba(5, 8, 24, 0.85);
+    --sidebar-border: rgba(255, 255, 255, 0.07);
+
+    --header-bg: rgba(7, 11, 30, 0.75);
+    --header-border: rgba(255, 255, 255, 0.07);
+
+    --footer-bg: rgba(6, 9, 27, 0.85);
+    --footer-border: rgba(255, 255, 255, 0.07);
+
+    --card-bg: rgba(13, 20, 48, 0.55);
+    --card-border: rgba(255, 255, 255, 0.09);
+    --card-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.35);
+
+    --card-bg-subtle: rgba(0, 0, 0, 0.28);
+    --card-border-subtle: rgba(255, 255, 255, 0.06);
+
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --text-inverse: #0f172a;
+
+    --input-bg: rgba(0, 0, 0, 0.35);
+    --input-border: rgba(255, 255, 255, 0.1);
+    --input-text: #f8fafc;
+    --input-placeholder: #64748b;
+
+    --accent-cyan: #00f5ff;
+    --accent-blue: #38bdf8;
+    --accent-emerald: #10b981;
+    --accent-purple: #c084fc;
+    --accent-amber: #fbbf24;
+    --accent-red: #f87171;
+
+    --glow-opacity: 0.25;
+    --grid-line-color: rgba(255, 255, 255, 0.02);
+
+    --tank-bg: rgba(0, 0, 0, 0.35);
+    --tank-border: rgba(255, 255, 255, 0.14);
+
+    --progress-bg: rgba(255, 255, 255, 0.08);
+
+    --table-header-bg: rgba(0, 0, 0, 0.35);
+    --table-border: rgba(255, 255, 255, 0.06);
+    --table-row-hover: rgba(0, 245, 255, 0.04);
+
+    --modal-bg: rgba(11, 16, 38, 0.95);
+    --modal-border: rgba(0, 245, 255, 0.2);
+    --modal-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+
+    --fab-menu-bg: #0b0f24;
+    --fab-menu-border: rgba(255, 255, 255, 0.08);
+
+    --brand-gradient: linear-gradient(135deg, #ffffff 0%, #a5f3fc 50%, #00f5ff 100%);
+    --card-hover-border: rgba(0, 245, 255, 0.35);
+}
+
+/* --------------------------------------------------------------------------
+   Theme 2: Solar Light (Crystal Sunlight Day)
+   -------------------------------------------------------------------------- */
+[data-theme="light"] {
+    --bg-gradient-start: #f1f5f9;
+    --bg-gradient-end: #e2e8f0;
+    --mesh-glow-1: rgba(14, 165, 233, 0.12);
+    --mesh-glow-2: rgba(245, 158, 11, 0.08);
+
+    --sidebar-bg: rgba(255, 255, 255, 0.94);
+    --sidebar-footer-bg: rgba(248, 250, 252, 0.95);
+    --sidebar-border: rgba(15, 23, 42, 0.08);
+
+    --header-bg: rgba(255, 255, 255, 0.88);
+    --header-border: rgba(15, 23, 42, 0.08);
+
+    --footer-bg: rgba(255, 255, 255, 0.9);
+    --footer-border: rgba(15, 23, 42, 0.08);
+
+    --card-bg: rgba(255, 255, 255, 0.88);
+    --card-border: rgba(15, 23, 42, 0.08);
+    --card-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.07), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+
+    --card-bg-subtle: rgba(241, 245, 249, 0.85);
+    --card-border-subtle: rgba(15, 23, 42, 0.06);
+
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --text-inverse: #f8fafc;
+
+    --input-bg: rgba(255, 255, 255, 0.95);
+    --input-border: rgba(15, 23, 42, 0.15);
+    --input-text: #0f172a;
+    --input-placeholder: #94a3b8;
+
+    --accent-cyan: #0284c7;
+    --accent-blue: #2563eb;
+    --accent-emerald: #059669;
+    --accent-purple: #7c3aed;
+    --accent-amber: #d97706;
+    --accent-red: #dc2626;
+
+    --glow-opacity: 0.1;
+    --grid-line-color: rgba(15, 23, 42, 0.03);
+
+    --tank-bg: rgba(226, 232, 240, 0.8);
+    --tank-border: rgba(15, 23, 42, 0.15);
+
+    --progress-bg: rgba(15, 23, 42, 0.08);
+
+    --table-header-bg: rgba(241, 245, 249, 0.95);
+    --table-border: rgba(15, 23, 42, 0.07);
+    --table-row-hover: rgba(2, 132, 199, 0.06);
+
+    --modal-bg: rgba(255, 255, 255, 0.98);
+    --modal-border: rgba(2, 132, 199, 0.25);
+    --modal-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.2);
+
+    --fab-menu-bg: #ffffff;
+    --fab-menu-border: rgba(15, 23, 42, 0.12);
+
+    --brand-gradient: linear-gradient(135deg, #0f172a 0%, #0369a1 60%, #0284c7 100%);
+    --card-hover-border: rgba(2, 132, 199, 0.35);
+}
+
+/* --------------------------------------------------------------------------
+   Theme 3: Emerald Nature (Eco Forest)
+   -------------------------------------------------------------------------- */
+[data-theme="emerald"] {
+    --bg-gradient-start: #021a12;
+    --bg-gradient-end: #062b1e;
+    --mesh-glow-1: rgba(16, 185, 129, 0.15);
+    --mesh-glow-2: rgba(52, 211, 153, 0.08);
+
+    --sidebar-bg: rgba(3, 29, 20, 0.94);
+    --sidebar-footer-bg: rgba(2, 20, 14, 0.88);
+    --sidebar-border: rgba(16, 185, 129, 0.15);
+
+    --header-bg: rgba(3, 29, 20, 0.8);
+    --header-border: rgba(16, 185, 129, 0.15);
+
+    --footer-bg: rgba(2, 22, 15, 0.88);
+    --footer-border: rgba(16, 185, 129, 0.15);
+
+    --card-bg: rgba(4, 42, 29, 0.6);
+    --card-border: rgba(52, 211, 153, 0.14);
+    --card-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.4);
+
+    --card-bg-subtle: rgba(0, 0, 0, 0.3);
+    --card-border-subtle: rgba(52, 211, 153, 0.08);
+
+    --text-primary: #f0fdf4;
+    --text-secondary: #86efac;
+    --text-muted: #4ade80;
+    --text-inverse: #022c1f;
+
+    --input-bg: rgba(0, 0, 0, 0.38);
+    --input-border: rgba(52, 211, 153, 0.2);
+    --input-text: #f0fdf4;
+    --input-placeholder: #4ade80;
+
+    --accent-cyan: #34d399;
+    --accent-blue: #38bdf8;
+    --accent-emerald: #10b981;
+    --accent-purple: #a7f3d0;
+    --accent-amber: #facc15;
+    --accent-red: #f87171;
+
+    --glow-opacity: 0.25;
+    --grid-line-color: rgba(52, 211, 153, 0.03);
+
+    --tank-bg: rgba(0, 0, 0, 0.35);
+    --tank-border: rgba(52, 211, 153, 0.2);
+
+    --progress-bg: rgba(255, 255, 255, 0.08);
+
+    --table-header-bg: rgba(0, 0, 0, 0.38);
+    --table-border: rgba(52, 211, 153, 0.1);
+    --table-row-hover: rgba(52, 211, 153, 0.06);
+
+    --modal-bg: rgba(3, 33, 23, 0.96);
+    --modal-border: rgba(52, 211, 153, 0.3);
+    --modal-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+
+    --fab-menu-bg: #03251a;
+    --fab-menu-border: rgba(52, 211, 153, 0.15);
+
+    --brand-gradient: linear-gradient(135deg, #ffffff 0%, #bbf7d0 50%, #34d399 100%);
+    --card-hover-border: rgba(52, 211, 153, 0.4);
+}
+
+/* --------------------------------------------------------------------------
+   Theme 4: Solar Sunset (Amber Horizon)
+   -------------------------------------------------------------------------- */
+[data-theme="sunset"] {
+    --bg-gradient-start: #1a0808;
+    --bg-gradient-end: #2d1010;
+    --mesh-glow-1: rgba(245, 158, 11, 0.14);
+    --mesh-glow-2: rgba(239, 68, 68, 0.1);
+
+    --sidebar-bg: rgba(30, 10, 10, 0.94);
+    --sidebar-footer-bg: rgba(20, 6, 6, 0.88);
+    --sidebar-border: rgba(245, 158, 11, 0.15);
+
+    --header-bg: rgba(30, 10, 10, 0.8);
+    --header-border: rgba(245, 158, 11, 0.15);
+
+    --footer-bg: rgba(22, 7, 7, 0.88);
+    --footer-border: rgba(245, 158, 11, 0.15);
+
+    --card-bg: rgba(45, 16, 16, 0.6);
+    --card-border: rgba(251, 146, 60, 0.14);
+    --card-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.4);
+
+    --card-bg-subtle: rgba(0, 0, 0, 0.3);
+    --card-border-subtle: rgba(251, 146, 60, 0.08);
+
+    --text-primary: #fff7ed;
+    --text-secondary: #fed7aa;
+    --text-muted: #fb923c;
+    --text-inverse: #2e0808;
+
+    --input-bg: rgba(0, 0, 0, 0.38);
+    --input-border: rgba(251, 146, 60, 0.2);
+    --input-text: #fff7ed;
+    --input-placeholder: #fb923c;
+
+    --accent-cyan: #f59e0b;
+    --accent-blue: #fb923c;
+    --accent-emerald: #10b981;
+    --accent-purple: #f43f5e;
+    --accent-amber: #f59e0b;
+    --accent-red: #ef4444;
+
+    --glow-opacity: 0.25;
+    --grid-line-color: rgba(245, 158, 11, 0.03);
+
+    --tank-bg: rgba(0, 0, 0, 0.35);
+    --tank-border: rgba(251, 146, 60, 0.2);
+
+    --progress-bg: rgba(255, 255, 255, 0.08);
+
+    --table-header-bg: rgba(0, 0, 0, 0.38);
+    --table-border: rgba(251, 146, 60, 0.1);
+    --table-row-hover: rgba(245, 158, 11, 0.06);
+
+    --modal-bg: rgba(35, 12, 12, 0.96);
+    --modal-border: rgba(245, 158, 11, 0.3);
+    --modal-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+
+    --fab-menu-bg: #270d0d;
+    --fab-menu-border: rgba(245, 158, 11, 0.15);
+
+    --brand-gradient: linear-gradient(135deg, #ffffff 0%, #fed7aa 50%, #f59e0b 100%);
+    --card-hover-border: rgba(245, 158, 11, 0.4);
+}
+
+/* ==========================================================================
+   Global Base & Typography
+   ========================================================================== */
+body {
+    font-family: 'Inter', 'Outfit', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: background 0.4s ease, color 0.3s ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-primary);
+}
+
+.font-mono {
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* ==========================================================================
+   Semantic Theme Layout Classes
+   ========================================================================== */
+.theme-sidebar {
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--sidebar-border);
+}
+
+.theme-sidebar-footer {
+    background: var(--sidebar-footer-bg);
+    border-top: 1px solid var(--sidebar-border);
+}
+
+.theme-header {
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--header-border);
+}
+
+.theme-footer {
+    background: var(--footer-bg);
+    border-top: 1px solid var(--footer-border);
+}
+
+.theme-brand-text {
+    background: var(--brand-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Text semantic helpers */
+.text-theme-primary {
+    color: var(--text-primary) !important;
+}
+
+.text-theme-secondary {
+    color: var(--text-secondary) !important;
+}
+
+.text-theme-muted {
+    color: var(--text-muted) !important;
+}
+
+.text-theme-accent {
+    color: var(--accent-cyan) !important;
+}
+
+/* ==========================================================================
+   Glassmorphism Cards & Containers
+   ========================================================================== */
+.glass-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.35s ease,
+                box-shadow 0.35s ease,
+                background 0.35s ease;
+}
+
+.glass-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--card-hover-border);
+    box-shadow: 0 15px 35px 0 rgba(0, 245, 255, 0.08);
+}
+
+/* Nested / subtle sub-containers inside cards */
+.sub-card, .nested-box {
+    background: var(--card-bg-subtle);
+    border: 1px solid var(--card-border-subtle);
+    border-radius: 12px;
+    transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+/* Theme Form Inputs & Controls */
+.theme-input, .theme-select {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--input-text);
+    border-radius: 12px;
+    transition: all 0.25s ease;
+}
+
+.theme-input::placeholder {
+    color: var(--input-placeholder);
+}
+
+.theme-input:focus, .theme-select:focus {
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 0 3px rgba(0, 245, 255, 0.15);
+    outline: none;
+}
+
+.theme-select option {
+    background: var(--sidebar-bg);
+    color: var(--text-primary);
+}
+
+/* Theme Badges */
+.theme-badge {
+    background: var(--card-bg-subtle);
+    border: 1px solid var(--card-border-subtle);
+    color: var(--text-secondary);
+}
+
+/* Theme Progress Bars */
+.theme-progress-track {
+    background: var(--progress-bg);
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+/* Theme Table Styles */
+.theme-table thead tr {
+    background: var(--table-header-bg);
+    border-bottom: 1px solid var(--table-border);
+}
+
+.theme-table tbody tr {
+    border-bottom: 1px solid var(--table-border);
+    transition: background 0.2s ease;
+}
+
+.theme-table tbody tr:hover {
+    background: var(--table-row-hover);
+}
+
+/* Theme Modals */
+.theme-modal-box {
+    background: var(--modal-bg);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border: 1px solid var(--modal-border);
+    box-shadow: var(--modal-shadow);
+    border-radius: 20px;
+}
+
+/* Floating Action Menu */
+.theme-fab-btn {
+    background: var(--fab-menu-bg);
+    border: 1px solid var(--fab-menu-border);
+    color: var(--text-primary);
+}
+.theme-fab-btn:hover {
+    border-color: var(--accent-cyan);
+}
+
+/* ==========================================================================
+   Neon Glows & Visual Polish
+   ========================================================================== */
+.glow-cyan {
+    box-shadow: 0 0 20px 0 rgba(0, 245, 255, var(--glow-opacity));
+}
+.glow-green {
+    box-shadow: 0 0 25px 2px rgba(16, 185, 129, 0.3);
+}
+.glow-red {
+    box-shadow: 0 0 25px 2px rgba(239, 68, 68, 0.3);
+}
+.glow-purple {
+    box-shadow: 0 0 25px 2px rgba(168, 85, 247, 0.3);
+}
+
+/* Sidebar Links */
+.sidebar-link {
+    color: var(--text-secondary);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sidebar-link.active, .sidebar-link:hover {
+    background: rgba(0, 245, 255, 0.1);
+    color: var(--accent-cyan) !important;
+    border-left: 3px solid var(--accent-cyan);
+    padding-left: 1.25rem;
+}
+
+/* Dynamic Mesh Glow Orbs */
+.mesh-orb-1 {
+    background: var(--mesh-glow-1);
+    filter: blur(120px);
+}
+.mesh-orb-2 {
+    background: var(--mesh-glow-2);
+    filter: blur(150px);
+}
+
+/* Grid overlay background */
+.bg-grid-overlay {
+    background-size: 40px 40px;
+    background-image: linear-gradient(to right, var(--grid-line-color) 1px, transparent 1px),
+                      linear-gradient(to bottom, var(--grid-line-color) 1px, transparent 1px);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--card-border);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-cyan);
+}
+
+/* Solar Panel Rotation */
+.solar-icon-spin {
+    animation: panel-rotation 12s linear infinite;
+}
+
+@keyframes panel-rotation {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Button Ripple feedback */
+.btn-ripple {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-ripple::after {
+    content: "";
+    background: rgba(255, 255, 255, 0.3);
+    display: block;
+    position: absolute;
+    border-radius: 50%;
+    padding-top: 240%;
+    padding-left: 240%;
+    margin-top: -120%;
+    margin-left: -120%;
+    opacity: 0;
+    transition: all 0.8s;
+}
+
+.btn-ripple:active::after {
+    padding-top: 0;
+    padding-left: 0;
+    margin-top: 0;
+    margin-left: 0;
+    opacity: 1;
+    transition: 0s;
+}
+
+/* Shimmer loading loader */
+.shimmer {
+    background: linear-gradient(90deg, transparent, var(--card-border), transparent);
+    background-size: 200% 100%;
+    animation: shimmer-swipe 1.5s infinite;
+}
+
+@keyframes shimmer-swipe {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* Theme Selector Pill & Dropdown styling */
+.theme-pill-active {
+    border-color: var(--accent-cyan) !important;
+    background: rgba(0, 245, 255, 0.15) !important;
+    color: var(--accent-cyan) !important;
+}

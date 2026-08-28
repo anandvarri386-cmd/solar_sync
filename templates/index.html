@@ -1,0 +1,394 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Animated Background Floating Glows -->
+<div class="absolute inset-0 pointer-events-none overflow-hidden z-0">
+    <div class="absolute top-[10%] left-[20%] w-72 h-72 rounded-full mesh-orb-1 animate-pulse"></div>
+    <div class="absolute bottom-[20%] right-[10%] w-96 h-96 rounded-full mesh-orb-2 animate-pulse" style="animation-duration: 6s"></div>
+</div>
+
+<!-- Page Content -->
+<div class="relative z-10 space-y-6">
+
+    <!-- 1. Hero Section Banner -->
+    <section class="glass-card glow-cyan p-6 md:p-8 flex flex-col md:flex-row items-center justify-between overflow-hidden relative">
+        <div class="space-y-2 text-center md:text-left">
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-[var(--card-bg-subtle)] border border-[var(--card-border-subtle)] text-[var(--accent-cyan)] text-xs font-mono tracking-wider uppercase">
+                <i class="fa-solid fa-bolt animate-bounce text-[10px]"></i>
+                <span>Smart Solar Pump Node</span>
+            </div>
+            <h2 class="text-2xl md:text-3.5xl font-extrabold tracking-tight text-theme-primary font-mono leading-none">
+                Solar Pump Monitoring & Control
+            </h2>
+            <p class="text-xs md:text-sm text-theme-secondary max-w-xl">
+                Real-time telemetry monitoring for Voltage, Current, Power, Duration, and Remote Relay Control.
+            </p>
+        </div>
+        
+        <!-- Quick Action Panel on Hero -->
+        <div class="mt-4 md:mt-0 flex flex-wrap gap-2.5 justify-center">
+            <button onclick="toggleSimulationState()" id="btn-hero-sim" class="px-4 py-2 bg-purple-950/20 border border-purple-500/30 hover:border-purple-400 text-purple-400 rounded-xl text-xs font-medium flex items-center space-x-1.5 transition-all duration-300 btn-ripple shadow-sm shadow-purple-900/10">
+                <i class="fa-solid fa-gamepad"></i>
+                <span id="txt-hero-sim">Simulate Telemetry</span>
+            </button>
+            <a href="/history" class="px-4 py-2 sub-card hover:border-[var(--accent-cyan)]/30 text-theme-secondary hover:text-theme-primary rounded-xl text-xs font-medium flex items-center space-x-1.5 transition-all duration-300 btn-ripple">
+                <i class="fa-solid fa-database text-[var(--accent-cyan)]"></i>
+                <span>View History Logs</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- 2. Core Stats Grid (5 Main Metrics: Status, Current, Voltage, Power, Duration) -->
+    <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        
+        <!-- Metric 1: Pump Status -->
+        <div class="glass-card p-4 relative overflow-hidden" id="card-status">
+            <div id="status-ripple" class="absolute inset-0 bg-emerald-500/5 opacity-0 transition-opacity duration-500 flex items-end justify-center pointer-events-none">
+                <div class="w-full h-8 bg-emerald-400/10 animate-pulse border-t border-emerald-500/20"></div>
+            </div>
+            <div class="flex justify-between items-start z-10 relative">
+                <span class="text-xs text-theme-secondary font-medium">1. Pump Status</span>
+                <span id="status-badge-dot" class="w-2.5 h-2.5 rounded-full bg-red-500 glow-red"></span>
+            </div>
+            <div class="mt-4 z-10 relative">
+                <div id="status-text-val" class="text-2xl font-black font-mono tracking-wide text-red-500 transition-colors duration-300">PUMP OFF</div>
+                <div class="text-[10px] text-theme-muted mt-1 uppercase tracking-wider font-mono" id="status-sub">No Load Connected</div>
+            </div>
+        </div>
+
+        <!-- Metric 2: Current (A) -->
+        <div class="glass-card p-4">
+            <div class="flex justify-between items-start">
+                <span class="text-xs text-theme-secondary font-medium">2. Current Draw</span>
+                <i class="fa-solid fa-wave-square text-[var(--accent-cyan)] text-xs"></i>
+            </div>
+            <div class="mt-4 flex items-baseline space-x-1">
+                <span id="val-current" class="text-3xl font-black font-mono tracking-tight text-theme-primary">0.00</span>
+                <span class="text-xs text-[var(--accent-cyan)] font-bold">A</span>
+            </div>
+            <div class="mt-2 h-1.5 w-full theme-progress-track">
+                <div id="bar-current" class="h-full bg-[var(--accent-cyan)] transition-all duration-500 rounded-full" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Metric 3: Voltage (V) -->
+        <div class="glass-card p-4">
+            <div class="flex justify-between items-start">
+                <span class="text-xs text-theme-secondary font-medium">3. Solar Voltage</span>
+                <i class="fa-solid fa-car-battery text-[var(--accent-blue)] text-xs"></i>
+            </div>
+            <div class="mt-4 flex items-baseline space-x-1">
+                <span id="val-voltage" class="text-3xl font-black font-mono tracking-tight text-theme-primary">0.0</span>
+                <span class="text-xs text-[var(--accent-blue)] font-bold">V</span>
+            </div>
+            <div class="mt-2 h-1.5 w-full theme-progress-track">
+                <div id="bar-voltage" class="h-full bg-[var(--accent-blue)] transition-all duration-500 rounded-full" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Metric 4: Power (W) -->
+        <div class="glass-card p-4">
+            <div class="flex justify-between items-start">
+                <span class="text-xs text-theme-secondary font-medium">4. Pump Power</span>
+                <i class="fa-solid fa-plug text-[var(--accent-purple)] text-xs"></i>
+            </div>
+            <div class="mt-4 flex items-baseline space-x-1">
+                <span id="val-power" class="text-3xl font-black font-mono tracking-tight text-theme-primary">0.0</span>
+                <span class="text-xs text-[var(--accent-purple)] font-bold">W</span>
+            </div>
+            <div class="mt-2 h-1.5 w-full theme-progress-track">
+                <div id="bar-power" class="h-full bg-[var(--accent-purple)] transition-all duration-500 rounded-full" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Metric 5: Duration of Pump (Hrs) -->
+        <div class="glass-card p-4 col-span-2 md:col-span-1">
+            <div class="flex justify-between items-start">
+                <span class="text-xs text-theme-secondary font-medium">5. Pump Duration</span>
+                <i class="fa-solid fa-hourglass-half text-[var(--accent-amber)] text-xs"></i>
+            </div>
+            <div class="mt-4 flex items-baseline space-x-1">
+                <span id="val-runtime" class="text-3xl font-black font-mono tracking-tight text-theme-primary">0.00</span>
+                <span class="text-xs text-[var(--accent-amber)] font-bold">Hrs</span>
+            </div>
+            <div class="text-[10px] text-theme-muted mt-1 uppercase tracking-wider font-mono">Active running time</div>
+        </div>
+
+    </section>
+
+    <!-- 3. Main Row: Pump ON / OFF Controls & Live Telemetry Feed -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left: Pump ON and OFF Controls (6/12 cols) -->
+        <div class="lg:col-span-6 glass-card p-6 flex flex-col justify-between" id="control-panel">
+            <div class="space-y-4">
+                <div class="flex items-center justify-between border-b border-[var(--card-border-subtle)] pb-4">
+                    <h3 class="text-lg font-bold tracking-tight text-theme-primary font-mono flex items-center space-x-2">
+                        <i class="fa-solid fa-power-off text-[var(--accent-cyan)]"></i>
+                        <span>Pump Control (ON / OFF)</span>
+                    </h3>
+                    <span class="text-xs font-mono text-[var(--accent-emerald)] flex items-center space-x-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                        <span>DIRECT RELAY</span>
+                    </span>
+                </div>
+
+                <p class="text-xs text-theme-secondary leading-relaxed">
+                    Click to trigger the remote relay on ESP32 (GPIO 26) instantly to start or stop the solar pump.
+                </p>
+
+                <!-- Dual Action Toggle Buttons (PUMP ON & PUMP OFF) -->
+                <div class="grid grid-cols-2 gap-4 pt-2">
+                    <button onclick="requestPumpState(1)" id="btn-pump-on" class="h-20 bg-emerald-950/30 border border-emerald-500/30 hover:border-emerald-400 text-emerald-400 font-bold rounded-2xl flex flex-col items-center justify-center space-y-1.5 transition-all duration-300 btn-ripple shadow-md hover:scale-[1.02] active:scale-[0.98]">
+                        <i class="fa-solid fa-play text-2xl"></i>
+                        <span class="text-xs tracking-wider uppercase font-bold">TURN PUMP ON</span>
+                    </button>
+                    <button onclick="requestPumpState(0)" id="btn-pump-off" class="h-20 sub-card border border-white/5 hover:border-red-500/30 text-theme-secondary hover:text-red-400 font-bold rounded-2xl flex flex-col items-center justify-center space-y-1.5 transition-all duration-300 btn-ripple shadow-md hover:scale-[1.02] active:scale-[0.98]">
+                        <i class="fa-solid fa-stop text-2xl"></i>
+                        <span class="text-xs tracking-wider uppercase font-bold">TURN PUMP OFF</span>
+                    </button>
+                </div>
+                
+                <!-- Target Command Indicator -->
+                <div class="flex items-center justify-between px-4 py-3 sub-card text-xs font-mono text-theme-secondary">
+                    <span>Active Relay Command:</span>
+                    <span id="target-cmd-val" class="font-bold text-red-400">PUMP STOPPED (OFF)</span>
+                </div>
+            </div>
+
+            <!-- Emergency Shutdown Control -->
+            <div class="pt-6 border-t border-[var(--card-border-subtle)] mt-6">
+                <button onclick="triggerEmergencyStop()" class="w-full py-3.5 bg-red-600 hover:bg-red-500 text-white font-black text-xs tracking-widest uppercase rounded-2xl glow-red hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 btn-ripple flex items-center justify-center space-x-2 shadow-lg shadow-red-900/30">
+                    <i class="fa-solid fa-triangle-exclamation animate-pulse"></i>
+                    <span>EMERGENCY SHUTDOWN (ESC / SPACE)</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Right: Live Edge Telemetry Matrix (6/12 cols) -->
+        <div class="lg:col-span-6 glass-card p-6 flex flex-col justify-between" id="live-monitoring">
+            <div>
+                <div class="flex items-center justify-between border-b border-[var(--card-border-subtle)] pb-4 mb-4">
+                    <h3 class="text-lg font-bold tracking-tight text-theme-primary font-mono flex items-center space-x-2">
+                        <i class="fa-solid fa-satellite-dish text-[var(--accent-cyan)]"></i>
+                        <span>Live Sensor Matrix</span>
+                    </h3>
+                    <span class="text-xs text-theme-muted font-mono" id="txt-last-update-time">Last update: --:--:--</span>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+                    <div class="sub-card p-3.5 text-center">
+                        <div class="text-[10px] text-theme-muted uppercase font-mono">Current Sensor</div>
+                        <div class="text-xl font-bold font-mono mt-1 text-[var(--accent-cyan)]"><span id="live-current">0.00</span> A</div>
+                    </div>
+                    <div class="sub-card p-3.5 text-center">
+                        <div class="text-[10px] text-theme-muted uppercase font-mono">Voltage Sensor</div>
+                        <div class="text-xl font-bold font-mono mt-1 text-[var(--accent-blue)]"><span id="live-voltage">0.0</span> V</div>
+                    </div>
+                    <div class="sub-card p-3.5 text-center">
+                        <div class="text-[10px] text-theme-muted uppercase font-mono">Pump Power</div>
+                        <div class="text-xl font-bold font-mono mt-1 text-[var(--accent-purple)]"><span id="live-power">0.0</span> W</div>
+                    </div>
+                    <div class="sub-card p-3.5 text-center">
+                        <div class="text-[10px] text-theme-muted uppercase font-mono">State Machine</div>
+                        <div class="text-xl font-bold font-mono mt-1 text-theme-muted" id="live-status">OFFLINE</div>
+                    </div>
+                    <div class="sub-card p-3.5 text-center">
+                        <div class="text-[10px] text-theme-muted uppercase font-mono">Hardware Status</div>
+                        <div class="text-xl font-bold font-mono mt-1 text-red-500" id="live-esp32">OFFLINE</div>
+                    </div>
+                    <div class="sub-card p-3.5 text-center">
+                        <div class="text-[10px] text-theme-muted uppercase font-mono">Energy Today</div>
+                        <div class="text-xl font-bold font-mono mt-1 text-[var(--accent-emerald)]"><span id="val-energy">0.000</span> <span class="text-xs">kWh</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Link to History Logs -->
+            <div class="pt-6 border-t border-[var(--card-border-subtle)] mt-6 flex items-center justify-between">
+                <span class="text-xs text-theme-secondary">Access complete historical records & logs:</span>
+                <a href="/history" class="px-4 py-2.5 bg-[var(--accent-cyan)]/15 border border-[var(--accent-cyan)]/30 hover:border-[var(--accent-cyan)] text-[var(--accent-cyan)] rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-300 flex items-center space-x-1.5">
+                    <span>Full Logs & Export</span>
+                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </a>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- 4. Related Performance Graphs Section -->
+    <section id="analytics" class="glass-card p-6">
+        
+        <div class="flex flex-col md:flex-row items-center justify-between border-b border-[var(--card-border-subtle)] pb-4 mb-4 gap-4">
+            <h3 class="text-lg font-bold tracking-tight text-theme-primary font-mono flex items-center space-x-2">
+                <i class="fa-solid fa-chart-line text-[var(--accent-cyan)]"></i>
+                <span>Related Telemetry & Runtime Graphs</span>
+            </h3>
+            
+            <!-- Chart Tabs Selector -->
+            <div class="flex sub-card p-1 rounded-xl">
+                <button onclick="switchChartTab('telemetry')" id="btn-tab-telemetry" class="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-[var(--accent-cyan)]/20 border border-[var(--accent-cyan)]/30 shadow-sm transition-all duration-300">
+                    Realtime Telemetry (V, A, W)
+                </button>
+                <button onclick="switchChartTab('usage')" id="btn-tab-usage" class="px-4 py-1.5 rounded-lg text-xs font-semibold text-theme-secondary hover:text-theme-primary transition-all duration-300">
+                    Daily Runtime & Energy
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab 1: Real-time Telemetry Grid (Voltage, Current, Power) -->
+        <div id="chart-tab-telemetry-content" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- 1. Voltage vs Time -->
+            <div class="sub-card p-4 flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xs font-bold text-theme-secondary uppercase font-mono">1. Voltage vs Time (V)</span>
+                    <button onclick="downloadChartImage('voltageChart')" class="p-1 rounded text-theme-muted hover:text-theme-primary transition-colors" title="Export PNG"><i class="fa-solid fa-download"></i></button>
+                </div>
+                <div class="h-60 relative w-full">
+                    <canvas id="chart-voltage"></canvas>
+                </div>
+            </div>
+
+            <!-- 2. Current vs Time -->
+            <div class="sub-card p-4 flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xs font-bold text-theme-secondary uppercase font-mono">2. Current vs Time (A)</span>
+                    <button onclick="downloadChartImage('currentChart')" class="p-1 rounded text-theme-muted hover:text-theme-primary transition-colors" title="Export PNG"><i class="fa-solid fa-download"></i></button>
+                </div>
+                <div class="h-60 relative w-full">
+                    <canvas id="chart-current"></canvas>
+                </div>
+            </div>
+
+            <!-- 3. Power vs Time -->
+            <div class="sub-card p-4 flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xs font-bold text-theme-secondary uppercase font-mono">3. Power vs Time (W)</span>
+                    <button onclick="downloadChartImage('powerChart')" class="p-1 rounded text-theme-muted hover:text-theme-primary transition-colors" title="Export PNG"><i class="fa-solid fa-download"></i></button>
+                </div>
+                <div class="h-60 relative w-full">
+                    <canvas id="chart-power"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Usage & Daily Runtime Graphs -->
+        <div id="chart-tab-usage-content" class="grid grid-cols-1 lg:grid-cols-3 gap-6 hidden">
+            <!-- Pump Runtime (Daily) -->
+            <div class="sub-card p-4 flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xs font-bold text-theme-secondary uppercase font-mono">Pump Runtime Daily (Hrs)</span>
+                    <button onclick="downloadChartImage('runtimeChart')" class="p-1 rounded text-theme-muted hover:text-theme-primary transition-colors"><i class="fa-solid fa-download"></i></button>
+                </div>
+                <div class="h-60 relative w-full">
+                    <canvas id="chart-runtime-daily"></canvas>
+                </div>
+            </div>
+
+            <!-- Daily Energy Consumption -->
+            <div class="sub-card p-4 flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xs font-bold text-theme-secondary uppercase font-mono">Daily Energy Used (kWh)</span>
+                    <button onclick="downloadChartImage('dailyEnergyChart')" class="p-1 rounded text-theme-muted hover:text-theme-primary transition-colors"><i class="fa-solid fa-download"></i></button>
+                </div>
+                <div class="h-60 relative w-full">
+                    <canvas id="chart-daily-energy"></canvas>
+                </div>
+            </div>
+
+            <!-- Weekly Aggregations -->
+            <div class="sub-card p-4 flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xs font-bold text-theme-secondary uppercase font-mono">Weekly Usage (kWh)</span>
+                    <button onclick="downloadChartImage('weeklyChart')" class="p-1 rounded text-theme-muted hover:text-theme-primary transition-colors"><i class="fa-solid fa-download"></i></button>
+                </div>
+                <div class="h-60 relative w-full">
+                    <canvas id="chart-weekly-energy"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+</div>
+
+<!-- Floating Action Button (FAB) -->
+<div class="fixed bottom-6 right-6 z-40">
+    <button onclick="toggleFABMenu()" id="btn-fab" class="w-14 h-14 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-xl glow-cyan flex items-center justify-center text-xl transition-all duration-300 hover:scale-105 active:scale-95 btn-ripple">
+        <i id="fab-icon" class="fa-solid fa-layer-group"></i>
+    </button>
+    
+    <div id="fab-menu" class="absolute bottom-16 right-0 flex flex-col items-end space-y-2 hidden">
+        <a href="/history" class="px-4 py-2.5 theme-fab-btn rounded-xl shadow-lg flex items-center space-x-2 transition-all duration-300 w-48 justify-between pointer-events-auto">
+            <span>Historical Logs</span>
+            <i class="fa-solid fa-database text-[var(--accent-cyan)]"></i>
+        </a>
+        <button onclick="openShortcutsModal()" class="px-4 py-2.5 theme-fab-btn rounded-xl shadow-lg flex items-center space-x-2 transition-all duration-300 w-48 justify-between pointer-events-auto">
+            <span>Keyboard Shortcuts</span>
+            <i class="fa-regular fa-keyboard text-[var(--accent-cyan)]"></i>
+        </button>
+        <button onclick="toggleFullscreen()" class="px-4 py-2.5 theme-fab-btn rounded-xl shadow-lg flex items-center space-x-2 transition-all duration-300 w-48 justify-between pointer-events-auto">
+            <span>Fullscreen Mode</span>
+            <i class="fa-solid fa-expand text-[var(--accent-cyan)]"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Modal 1: Pump Activation Confirmation Modal -->
+<div id="confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-md hidden transition-opacity duration-300">
+    <div class="theme-modal-box max-w-sm w-full p-6 space-y-4 m-4">
+        <div class="flex items-center space-x-3 text-[var(--accent-cyan)]">
+            <i class="fa-solid fa-circle-check text-2xl"></i>
+            <h4 class="text-lg font-bold font-mono text-theme-primary">Confirm Pump Switch</h4>
+        </div>
+        <p class="text-xs text-theme-secondary leading-relaxed" id="confirm-modal-text">
+            Are you sure you want to send the activation signal to the Smart Solar Pump?
+        </p>
+        <div class="flex space-x-3 justify-end pt-2">
+            <button onclick="closeConfirmationModal(false)" class="px-4 py-2 sub-card text-theme-secondary hover:text-theme-primary rounded-xl text-xs font-semibold transition-all">Cancel</button>
+            <button onclick="closeConfirmationModal(true)" id="btn-confirm-action" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition-all">Yes, Proceed</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 2: Keyboard Shortcuts Guide -->
+<div id="shortcuts-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-md hidden transition-opacity duration-300">
+    <div class="theme-modal-box max-w-sm w-full p-6 space-y-4 m-4">
+        <div class="flex items-center space-x-3 text-[var(--accent-cyan)] border-b border-[var(--card-border-subtle)] pb-2">
+            <i class="fa-solid fa-keyboard text-xl"></i>
+            <h4 class="text-lg font-bold font-mono text-theme-primary">Keyboard Shortcuts</h4>
+        </div>
+        <div class="space-y-2.5 text-xs text-theme-secondary font-mono">
+            <div class="flex justify-between border-b border-[var(--card-border-subtle)] pb-1">
+                <span>Emergency Stop:</span>
+                <kbd class="px-1.5 py-0.5 bg-red-950/40 border border-red-500/30 text-red-400 rounded text-[10px]">SPACEBAR</kbd>
+            </div>
+            <div class="flex justify-between border-b border-[var(--card-border-subtle)] pb-1">
+                <span>Start Pump:</span>
+                <kbd class="px-1.5 py-0.5 sub-card text-theme-primary rounded text-[10px]">ALT + O</kbd>
+            </div>
+            <div class="flex justify-between border-b border-[var(--card-border-subtle)] pb-1">
+                <span>Stop Pump:</span>
+                <kbd class="px-1.5 py-0.5 sub-card text-theme-primary rounded text-[10px]">ALT + F</kbd>
+            </div>
+            <div class="flex justify-between border-b border-[var(--card-border-subtle)] pb-1">
+                <span>Toggle Simulator:</span>
+                <kbd class="px-1.5 py-0.5 sub-card text-theme-primary rounded text-[10px]">ALT + S</kbd>
+            </div>
+            <div class="flex justify-between pb-1">
+                <span>Close Window:</span>
+                <kbd class="px-1.5 py-0.5 sub-card text-theme-primary rounded text-[10px]">ESC</kbd>
+            </div>
+        </div>
+        <div class="flex justify-end pt-2">
+            <button onclick="closeShortcutsModal()" class="px-4 py-2 sub-card text-theme-secondary hover:text-theme-primary rounded-xl text-xs font-semibold transition-all">Dismiss</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/charts.js"></script>
+<script src="/static/js/dashboard.js"></script>
+{% endblock %}

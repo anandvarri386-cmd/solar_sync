@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="relative z-10 max-w-4xl mx-auto space-y-6">
+
+    <!-- Header Section -->
+    <section class="glass-card glow-cyan p-6 md:p-8 text-center space-y-2 relative overflow-hidden">
+        <div class="absolute inset-0 pointer-events-none opacity-5">
+            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="currentColor" stroke-width="1"/>
+                    </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#grid)" />
+            </svg>
+        </div>
+        <i class="fa-solid fa-solar-panel text-4xl text-[var(--accent-cyan)] mb-2 glow-cyan"></i>
+        <h2 class="text-3xl font-extrabold tracking-tight font-mono uppercase theme-brand-text">
+            Smart Solar DC Pump Control System
+        </h2>
+        <p class="text-xs text-[var(--accent-cyan)] font-mono tracking-widest uppercase">Research Project & Design Specification</p>
+    </section>
+
+    <!-- Content Grid -->
+    <section class="grid grid-cols-1 md:grid-cols-12 gap-6">
+        
+        <!-- Left Side: System Details (7/12 cols) -->
+        <div class="md:col-span-7 glass-card p-6 space-y-6">
+            <!-- Features list -->
+            <div class="space-y-3">
+                <h3 class="text-xs font-bold text-[var(--accent-cyan)] uppercase tracking-wider font-mono border-b border-[var(--card-border-subtle)] pb-2">
+                    Core Specifications
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-theme-secondary">
+                    <div class="flex items-center space-x-2.5 sub-card p-3 rounded-xl">
+                        <i class="fa-solid fa-cloud text-[var(--accent-cyan)] text-base"></i>
+                        <span class="font-medium text-theme-primary">Remote Socket Controls</span>
+                    </div>
+                    <div class="flex items-center space-x-2.5 sub-card p-3 rounded-xl">
+                        <i class="fa-solid fa-microchip text-[var(--accent-blue)] text-base"></i>
+                        <span class="font-medium text-theme-primary">ESP32 Edge Integration</span>
+                    </div>
+                    <div class="flex items-center space-x-2.5 sub-card p-3 rounded-xl">
+                        <i class="fa-solid fa-chart-line text-[var(--accent-emerald)] text-base"></i>
+                        <span class="font-medium text-theme-primary">Rolling Telemetry Logs</span>
+                    </div>
+                    <div class="flex items-center space-x-2.5 sub-card p-3 rounded-xl">
+                        <i class="fa-solid fa-shield-halved text-[var(--accent-purple)] text-base"></i>
+                        <span class="font-medium text-theme-primary">Safety Overcurrent Shutoffs</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tech stack lists -->
+            <div class="space-y-3">
+                <h3 class="text-xs font-bold text-[var(--accent-cyan)] uppercase tracking-wider font-mono border-b border-[var(--card-border-subtle)] pb-2">
+                    Development Tech Stack
+                </h3>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-3 py-1.5 sub-card rounded-lg text-xs font-mono text-theme-secondary font-medium">Python 3.12</span>
+                    <span class="px-3 py-1.5 sub-card rounded-lg text-xs font-mono text-theme-secondary font-medium">Flask Microframework</span>
+                    <span class="px-3 py-1.5 sub-card rounded-lg text-xs font-mono text-theme-secondary font-medium">Flask-SocketIO</span>
+                    <span class="px-3 py-1.5 sub-card rounded-lg text-xs font-mono text-theme-secondary font-medium">SQLite Database</span>
+                    <span class="px-3 py-1.5 sub-card rounded-lg text-xs font-mono text-theme-secondary font-medium">Tailwind CSS v4</span>
+                    <span class="px-3 py-1.5 sub-card rounded-lg text-xs font-mono text-theme-secondary font-medium">GSAP Animations</span>
+                    <span class="px-3 py-1.5 sub-card rounded-lg text-xs font-mono text-theme-secondary font-medium">Chart.js Charts</span>
+                    <span class="px-3 py-1.5 sub-card rounded-lg text-xs font-mono text-theme-secondary font-medium">ESP32 Arduino SDK</span>
+                </div>
+            </div>
+
+            <!-- Developer details -->
+            <div class="p-4 sub-card rounded-xl text-xs space-y-1">
+                <div class="text-theme-muted font-mono uppercase tracking-wider text-[10px]">Project Lab Lead</div>
+                <div class="text-theme-primary font-bold text-sm">IoT Systems Integration Architect</div>
+                <div class="text-theme-secondary font-mono">Operations Command & Infrastructure Deployment Group</div>
+            </div>
+        </div>
+
+        <!-- Right Side: SVG Hardware Wiring Schematic (5/12 cols) -->
+        <div class="md:col-span-5 glass-card p-6 flex flex-col justify-between space-y-4">
+            <h3 class="text-xs font-bold text-[var(--accent-cyan)] uppercase tracking-wider font-mono border-b border-[var(--card-border-subtle)] pb-2">
+                Hardware Node Schematic
+            </h3>
+            
+            <div class="w-full sub-card p-3 rounded-xl flex items-center justify-center">
+                <!-- SVG Wiring Layout -->
+                <svg viewBox="0 0 280 220" class="w-full h-auto font-mono">
+                    <!-- ESP32 Board representation -->
+                    <rect x="100" y="30" width="80" height="120" rx="4" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+                    <text x="140" y="45" font-size="9" fill="#00f5ff" font-weight="bold" text-anchor="middle">ESP-WROOM-32</text>
+                    
+                    <!-- Board Pin indicators -->
+                    <circle cx="100" cy="70" r="2.5" fill="#facc15" title="Pin 35 (Voltage)"/>
+                    <text x="108" y="73" font-size="7" fill="#cbd5e1">ADC35</text>
+                    
+                    <circle cx="100" cy="90" r="2.5" fill="#facc15" title="Pin 34 (Current)"/>
+                    <text x="108" y="93" font-size="7" fill="#cbd5e1">ADC34</text>
+                    
+                    <circle cx="180" cy="110" r="2.5" fill="#ef4444" title="Pin 26 (Relay Command)"/>
+                    <text x="162" y="113" font-size="7" fill="#cbd5e1">GPIO26</text>
+                    
+                    <!-- Peripherals labels & representations -->
+                    <!-- Voltage Divider -->
+                    <rect x="10" y="55" width="55" height="30" rx="3" fill="#0f172a" stroke="#64748b"/>
+                    <text x="37.5" y="70" font-size="8" fill="#f8fafc" text-anchor="middle">Divider</text>
+                    <text x="37.5" y="80" font-size="6" fill="#94a3b8" text-anchor="middle">0-25V Sensor</text>
+                    
+                    <!-- ACS712 Sensor -->
+                    <rect x="10" y="110" width="55" height="30" rx="3" fill="#0f172a" stroke="#64748b"/>
+                    <text x="37.5" y="125" font-size="8" fill="#f8fafc" text-anchor="middle">ACS712</text>
+                    <text x="37.5" y="135" font-size="6" fill="#94a3b8" text-anchor="middle">Current Sensor</text>
+                    
+                    <!-- Relay Node -->
+                    <rect x="215" y="95" width="55" height="30" rx="3" fill="#0f172a" stroke="#ef4444" stroke-dasharray="2,1"/>
+                    <text x="242.5" y="110" font-size="8" fill="#ef4444" text-anchor="middle">Relay Mod</text>
+                    <text x="242.5" y="120" font-size="6" fill="#fca5a5" text-anchor="middle">DC Pump Switch</text>
+                    
+                    <!-- Wiring connection lines -->
+                    <!-- Divider to ADC35 -->
+                    <path d="M 65 70 L 100 70" fill="none" stroke="#facc15" stroke-width="1.5"/>
+                    
+                    <!-- ACS712 to ADC34 -->
+                    <path d="M 65 125 L 80 125 L 80 90 L 100 90" fill="none" stroke="#facc15" stroke-width="1.5"/>
+                    
+                    <!-- GPIO26 to Relay -->
+                    <path d="M 180 110 L 215 110" fill="none" stroke="#ef4444" stroke-width="1.5"/>
+                    
+                    <!-- Power Lines labels -->
+                    <text x="140" y="185" font-size="7" fill="#94a3b8" text-anchor="middle">Shared Common GND Loop</text>
+                </svg>
+            </div>
+            
+            <p class="text-[10px] text-theme-muted leading-normal text-center">
+                Typical interface pinouts are mapped. Connect ACS712 Vcc to 5V node and Voltage Divider pinout to 12V solar bus rail.
+            </p>
+        </div>
+
+    </section>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const aboutActive = document.querySelector("#nav-about");
+        if (aboutActive) aboutActive.classList.add("active");
+    });
+</script>
+{% endblock %}

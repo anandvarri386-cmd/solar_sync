@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="relative z-10 max-w-3xl mx-auto space-y-6">
+
+    <!-- Header Section -->
+    <section class="glass-card glow-cyan p-6">
+        <h2 class="text-2xl font-bold tracking-tight text-theme-primary font-mono flex items-center space-x-2">
+            <i class="fa-solid fa-sliders text-[var(--accent-cyan)]"></i>
+            <span>Pump Configuration & Hardware Binding</span>
+        </h2>
+        <p class="text-xs text-theme-secondary mt-1">
+            Manage your account credentials, bind your ESP32 IoT node to your pump, adjust calibrations, and customize themes.
+        </p>
+    </section>
+
+    <!-- 1. Customer Pump Hardware Binding Box -->
+    <section class="glass-card p-6 space-y-4 border-l-4 border-l-[var(--accent-cyan)]">
+        <div class="flex items-center justify-between border-b border-[var(--card-border-subtle)] pb-3">
+            <h3 class="text-sm font-bold text-theme-primary font-mono flex items-center space-x-2">
+                <i class="fa-solid fa-microchip text-[var(--accent-cyan)]"></i>
+                <span>My Pump Hardware Integration</span>
+            </h3>
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase bg-[var(--accent-cyan)]/15 border border-[var(--accent-cyan)]/30 text-[var(--accent-cyan)]">
+                Active Binding
+            </span>
+        </div>
+
+        <p class="text-xs text-theme-secondary">
+            Use these unique credentials in your ESP32 Arduino sketch to transmit live telemetry to your account.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+            
+            <!-- Pump Device ID -->
+            <div class="sub-card p-3.5 rounded-xl space-y-1.5">
+                <span class="text-[10px] text-theme-muted uppercase font-mono font-semibold">Pump Device ID</span>
+                <div class="flex items-center justify-between">
+                    <span id="txt-device-id" class="text-sm font-bold font-mono text-[var(--accent-cyan)]">{{ current_user.pump_device_id if current_user else 'PUMP-SOLAR-1001' }}</span>
+                    <button type="button" onclick="copyToClipboard('txt-device-id', 'Device ID copied!')" class="p-1.5 sub-card hover:border-[var(--accent-cyan)] text-theme-secondary hover:text-theme-primary rounded-lg text-xs transition-colors" title="Copy Device ID">
+                        <i class="fa-regular fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- API Key -->
+            <div class="sub-card p-3.5 rounded-xl space-y-1.5">
+                <span class="text-[10px] text-theme-muted uppercase font-mono font-semibold">ESP32 Hardware API Key</span>
+                <div class="flex items-center justify-between">
+                    <span id="txt-api-key" class="text-xs font-mono text-theme-primary truncate max-w-[170px]">{{ current_user.api_key if current_user else 'sync_sec_demo1234567890abcdef' }}</span>
+                    <div class="flex space-x-1">
+                        <button type="button" onclick="copyToClipboard('txt-api-key', 'API Key copied!')" class="p-1.5 sub-card hover:border-[var(--accent-cyan)] text-theme-secondary hover:text-theme-primary rounded-lg text-xs transition-colors" title="Copy API Key">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                        <button type="button" onclick="handleRegenerateKey()" class="p-1.5 sub-card hover:border-amber-400 text-theme-secondary hover:text-amber-400 rounded-lg text-xs transition-colors" title="Regenerate API Key">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ESP32 Arduino Integration Code Snippet -->
+        <div class="pt-2">
+            <div class="flex justify-between items-center mb-1.5">
+                <span class="text-[11px] font-semibold text-theme-secondary font-mono">ESP32 Sketch Configuration Snippet:</span>
+                <button type="button" onclick="copySnippetCode()" class="text-[10px] text-[var(--accent-cyan)] hover:underline flex items-center space-x-1 font-mono">
+                    <i class="fa-regular fa-copy"></i>
+                    <span>Copy Config Code</span>
+                </button>
+            </div>
+            <pre class="p-3 rounded-xl bg-black/40 border border-white/10 text-xs font-mono text-emerald-400 overflow-x-auto select-all leading-relaxed" id="code-snippet-box">
+const char* serverUrl = "http://10.250.93.242:5000/api/esp32/data";
+const char* deviceId  = "{{ current_user.pump_device_id if current_user else 'PUMP-SOLAR-1001' }}";
+const char* apiKey    = "{{ current_user.api_key if current_user else 'sync_sec_demo1234567890abcdef' }}";</pre>
+        </div>
+    </section>
+
+    <!-- Calibration Form Card -->
+    <section class="glass-card p-6">
+        <form id="settings-form" onsubmit="handleSettingsSave(event)" class="space-y-6">
+            
+            <!-- Section 0: Theme Customization -->
+            <div class="space-y-4">
+                <h3 class="text-xs font-bold text-[var(--accent-cyan)] uppercase tracking-wider font-mono border-b border-[var(--card-border-subtle)] pb-2 flex items-center justify-between">
+                    <span>Display Theme Mode</span>
+                    <span id="theme-current-label" class="text-[10px] text-theme-muted font-mono uppercase"></span>
+                </h3>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <button type="button" onclick="setTheme('dark')" data-theme-select="dark" class="sub-card p-3 rounded-xl flex flex-col items-center space-y-2 hover:border-[var(--accent-cyan)] transition-all">
+                        <i class="fa-solid fa-moon text-cyan-400 text-lg"></i>
+                        <span class="text-xs font-semibold text-theme-primary">Obsidian</span>
+                    </button>
+                    <button type="button" onclick="setTheme('light')" data-theme-select="light" class="sub-card p-3 rounded-xl flex flex-col items-center space-y-2 hover:border-[var(--accent-cyan)] transition-all">
+                        <i class="fa-solid fa-sun text-amber-500 text-lg"></i>
+                        <span class="text-xs font-semibold text-theme-primary">Solar Light</span>
+                    </button>
+                    <button type="button" onclick="setTheme('emerald')" data-theme-select="emerald" class="sub-card p-3 rounded-xl flex flex-col items-center space-y-2 hover:border-[var(--accent-cyan)] transition-all">
+                        <i class="fa-solid fa-leaf text-emerald-400 text-lg"></i>
+                        <span class="text-xs font-semibold text-theme-primary">Eco Emerald</span>
+                    </button>
+                    <button type="button" onclick="setTheme('sunset')" data-theme-select="sunset" class="sub-card p-3 rounded-xl flex flex-col items-center space-y-2 hover:border-[var(--accent-cyan)] transition-all">
+                        <i class="fa-solid fa-fire-flame-curved text-orange-400 text-lg"></i>
+                        <span class="text-xs font-semibold text-theme-primary">Solar Sunset</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Section 1: Pump General Info -->
+            <div class="space-y-4 pt-2">
+                <h3 class="text-xs font-bold text-[var(--accent-cyan)] uppercase tracking-wider font-mono border-b border-[var(--card-border-subtle)] pb-2">
+                    Pump Profile Information
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label for="pump_name" class="text-xs text-theme-secondary font-mono">Pump Identifier Name</label>
+                        <input type="text" id="pump_name" name="pump_name" value="{{ current_user.pump_name if current_user else config.pump_name }}" class="w-full px-4 py-2.5 theme-input text-xs font-mono" required>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs text-theme-secondary font-mono">Customer Account Email</label>
+                        <input type="text" disabled value="{{ current_user.email if current_user else 'demo@solarsync.com' }}" class="w-full px-4 py-2.5 theme-input text-xs font-mono opacity-60 cursor-not-allowed">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Sensor Calibration -->
+            <div class="space-y-4 pt-2">
+                <h3 class="text-xs font-bold text-[var(--accent-cyan)] uppercase tracking-wider font-mono border-b border-[var(--card-border-subtle)] pb-2">
+                    Analog Multipliers & Zero Calibrations
+                </h3>
+                <p class="text-[10px] text-theme-muted leading-normal font-mono">Adjust values to calibrate voltage divider ratio and ACS712 zero-current offsets.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label for="voltage_calibration" class="text-xs text-theme-secondary font-mono">Voltage Calibration Ratio</label>
+                        <input type="number" id="voltage_calibration" name="voltage_calibration" step="0.01" min="0.1" max="10.0" value="{{ config.voltage_calibration }}" class="w-full px-4 py-2.5 theme-input text-xs font-mono" required>
+                    </div>
+                    <div class="space-y-1">
+                        <label for="current_offset" class="text-xs text-theme-secondary font-mono">ACS712 Zero Offset (A)</label>
+                        <input type="number" id="current_offset" name="current_offset" step="0.001" min="-2.0" max="2.0" value="{{ config.current_offset }}" class="w-full px-4 py-2.5 theme-input text-xs font-mono" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Simulation Toggle -->
+            <div class="space-y-4 pt-2">
+                <h3 class="text-xs font-bold text-[var(--accent-cyan)] uppercase tracking-wider font-mono border-b border-[var(--card-border-subtle)] pb-2">
+                    Simulation Engine
+                </h3>
+                <div class="flex items-center justify-between px-4 py-3 sub-card">
+                    <div class="leading-tight text-left pr-4">
+                        <div class="text-xs font-bold text-theme-primary">Browser Telemetry Simulator</div>
+                        <span class="text-[10px] text-theme-muted font-mono">Generate and save realistic sensor data inside browser session when ESP32 is offline.</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="web_simulation_enabled" name="web_simulation_enabled" class="sr-only peer" {% if config.web_simulation_enabled %}checked{% endif %}>
+                        <div class="w-11 h-6 sub-card peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-400 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--accent-cyan)] peer-checked:after:bg-white"></div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Submit button -->
+            <div class="flex justify-end pt-4 border-t border-[var(--card-border-subtle)]">
+                <button type="submit" class="px-6 py-3 bg-gradient-to-tr from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] btn-ripple glow-cyan shadow-lg">
+                    Save Calibration Settings
+                </button>
+            </div>
+            
+        </form>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const settingsActive = document.querySelector("#nav-settings");
+        if (settingsActive) settingsActive.classList.add("active");
+        
+        // Sync active theme in settings selector
+        const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
+        document.querySelectorAll("[data-theme-select]").forEach(el => {
+            if (el.getAttribute("data-theme-select") === currentTheme) {
+                el.classList.add("theme-pill-active");
+            }
+        });
+    });
+
+    function copyToClipboard(elementId, toastMsg) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        const text = el.textContent.trim();
+        navigator.clipboard.writeText(text).then(() => {
+            if (window.showToast) window.showToast("success", toastMsg || "Copied to clipboard!");
+        });
+    }
+
+    function copySnippetCode() {
+        const box = document.getElementById("code-snippet-box");
+        if (!box) return;
+        navigator.clipboard.writeText(box.textContent.trim()).then(() => {
+            if (window.showToast) window.showToast("success", "ESP32 code snippet copied!");
+        });
+    }
+
+    async function handleRegenerateKey() {
+        if (!confirm("Are you sure you want to regenerate your ESP32 API Key? You will need to update the key in your ESP32 code.")) {
+            return;
+        }
+        try {
+            const res = await fetch('/api/user/regenerate_key', { method: 'POST' });
+            const data = await res.json();
+            if (data.status === 'success') {
+                document.getElementById('txt-api-key').textContent = data.api_key;
+                const deviceId = document.getElementById('txt-device-id').textContent.trim();
+                document.getElementById('code-snippet-box').textContent = 
+`const char* serverUrl = "http://172.29.204.242:5000/api/esp32/data";
+const char* deviceId  = "${deviceId}";
+const char* apiKey    = "${data.api_key}";`;
+                if (window.showToast) window.showToast("success", "New API Key generated successfully!");
+            } else {
+                alert("Error regenerating key: " + data.message);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Network error regenerating key.");
+        }
+    }
+
+    async function handleSettingsSave(e) {
+        e.preventDefault();
+        
+        const form = document.getElementById("settings-form");
+        const formData = new FormData(form);
+        
+        const simEnabled = document.getElementById("web_simulation_enabled").checked;
+        formData.set("web_simulation_enabled", simEnabled ? "true" : "false");
+        
+        try {
+            const res = await fetch("/api/settings", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    voltage_multiplier: parseFloat(formData.get("voltage_calibration")),
+                    current_offset: parseFloat(formData.get("current_offset")),
+                    pump_name: formData.get("pump_name")
+                })
+            });
+            const data = await res.json();
+            
+            if (data.status === "success") {
+                if (window.showToast) {
+                    window.showToast("success", "Pump settings and calibration saved successfully.");
+                } else {
+                    alert("Settings saved successfully.");
+                }
+                localStorage.setItem("simTelemetryEnabled", simEnabled ? "true" : "false");
+            } else {
+                alert("Failed to save configuration: " + data.message);
+            }
+        } catch (err) {
+            console.error("Error saving calibrations:", err);
+            alert("Connection error trying to save settings.");
+        }
+    }
+</script>
+{% endblock %}

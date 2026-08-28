@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="relative z-10 space-y-6">
+    
+    <!-- Hero Header Log Summary -->
+    <section class="glass-card glow-cyan p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="space-y-1.5 text-center md:text-left">
+            <h2 class="text-2xl font-bold tracking-tight text-theme-primary font-mono flex items-center justify-center md:justify-start space-x-2">
+                <i class="fa-solid fa-database text-[var(--accent-cyan)]"></i>
+                <span>Database Historical Logs</span>
+            </h2>
+            <p class="text-xs text-theme-secondary">
+                Detailed list of every telemetry pulse received from ACS712 & Divider sensors on the ESP32 node.
+            </p>
+        </div>
+        <!-- Export Actions Grid -->
+        <div class="flex items-center space-x-3.5">
+            <button onclick="exportToCSV()" class="px-4 py-2.5 bg-emerald-950/20 border border-emerald-500/30 hover:border-emerald-400 text-emerald-400 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-300 btn-ripple flex items-center space-x-1.5 shadow-sm">
+                <i class="fa-solid fa-file-csv"></i>
+                <span>Export CSV</span>
+            </button>
+            <button onclick="exportToExcel()" class="px-4 py-2.5 bg-cyan-950/20 border border-cyan-500/30 hover:border-cyan-400 text-cyan-400 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-300 btn-ripple flex items-center space-x-1.5 shadow-sm">
+                <i class="fa-regular fa-file-excel"></i>
+                <span>Export Excel</span>
+            </button>
+        </div>
+    </section>
+
+    <!-- Search & Filter Controls -->
+    <section class="glass-card p-5 grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+        <!-- Search bar -->
+        <div class="md:col-span-2 relative">
+            <input type="text" id="history-search" oninput="triggerHistorySearch()" placeholder="Search logs by Date, Time, or Status..." class="w-full pl-10 pr-4 py-2.5 theme-input text-xs font-mono">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-theme-muted text-xs"></i>
+        </div>
+        
+        <!-- Sorting parameters selector -->
+        <div class="flex items-center space-x-2">
+            <span class="text-xs text-theme-secondary font-mono whitespace-nowrap">Sort By:</span>
+            <select id="history-sort-col" onchange="loadLogsTable(0)" class="w-full px-3 py-2 theme-select text-xs font-mono">
+                <option value="id" selected>LOG ID</option>
+                <option value="date">DATE</option>
+                <option value="voltage">VOLTAGE</option>
+                <option value="current">CURRENT</option>
+                <option value="power">POWER</option>
+                <option value="runtime">RUNTIME</option>
+                <option value="energy">ENERGY</option>
+            </select>
+        </div>
+
+        <!-- Sort Order Asc/Desc selector -->
+        <div class="flex items-center space-x-2">
+            <span class="text-xs text-theme-secondary font-mono whitespace-nowrap">Order:</span>
+            <select id="history-sort-order" onchange="loadLogsTable(0)" class="w-full px-3 py-2 theme-select text-xs font-mono">
+                <option value="DESC" selected>NEWEST FIRST</option>
+                <option value="ASC">OLDEST FIRST</option>
+            </select>
+        </div>
+    </section>
+
+    <!-- Historical Data Table card -->
+    <section class="glass-card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse theme-table" id="logs-data-table">
+                <thead>
+                    <tr class="text-[10px] text-[var(--accent-cyan)] font-bold uppercase tracking-wider font-mono">
+                        <th class="py-4 px-6">ID</th>
+                        <th class="py-4 px-6">Date</th>
+                        <th class="py-4 px-6">Time</th>
+                        <th class="py-4 px-6 text-right">Voltage</th>
+                        <th class="py-4 px-6 text-right">Current</th>
+                        <th class="py-4 px-6 text-right">Power</th>
+                        <th class="py-4 px-6 text-center">Status</th>
+                        <th class="py-4 px-6 text-right">Session Run</th>
+                        <th class="py-4 px-6 text-right">Energy</th>
+                        <th class="py-4 px-6 text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="logs-table-body" class="text-xs font-mono text-theme-secondary divide-y divide-[var(--table-border)]">
+                    <!-- Loaded dynamically via javascript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Table Empty State -->
+        <div id="table-empty-state" class="py-16 text-center space-y-4 hidden">
+            <div class="w-16 h-16 rounded-full sub-card flex items-center justify-center mx-auto text-[var(--accent-cyan)] text-xl">
+                <i class="fa-solid fa-hourglass-empty"></i>
+            </div>
+            <div class="space-y-1">
+                <h4 class="text-sm font-bold text-theme-primary uppercase tracking-wider font-mono">No telemetry records found</h4>
+                <p class="text-xs text-theme-muted max-w-xs mx-auto">Database table is empty. Enable simulator to populate live rows.</p>
+            </div>
+        </div>
+
+        <!-- Table Loading Skeleton -->
+        <div id="table-loading-state" class="p-8 space-y-4">
+            <div class="h-6 sub-card shimmer"></div>
+            <div class="h-6 sub-card shimmer" style="animation-delay: 0.1s"></div>
+            <div class="h-6 sub-card shimmer" style="animation-delay: 0.2s"></div>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="px-6 py-4 flex flex-col sm:flex-row items-center justify-between border-t border-[var(--card-border-subtle)] sub-card gap-4 rounded-none">
+            <div class="text-xs text-theme-muted font-mono">
+                Showing <span id="pag-start" class="text-theme-primary font-semibold">0</span> to <span id="pag-end" class="text-theme-primary font-semibold">0</span> of <span id="pag-total" class="text-theme-primary font-semibold">0</span> records
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <button onclick="changePage(-1)" id="btn-pag-prev" class="px-3.5 py-2 sub-card hover:border-[var(--accent-cyan)]/30 disabled:opacity-35 rounded-xl text-[10px] font-bold text-theme-secondary hover:text-theme-primary disabled:cursor-not-allowed uppercase transition-all duration-300">
+                    <i class="fa-solid fa-angle-left mr-1"></i> Prev
+                </button>
+                <button onclick="changePage(1)" id="btn-pag-next" class="px-3.5 py-2 sub-card hover:border-[var(--accent-cyan)]/30 disabled:opacity-35 rounded-xl text-[10px] font-bold text-theme-secondary hover:text-theme-primary disabled:cursor-not-allowed uppercase transition-all duration-300">
+                    Next <i class="fa-solid fa-angle-right ml-1"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentOffset = 0;
+    const recordsLimit = 15;
+    let searchTimeout = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const dashboardActive = document.querySelector("#nav-history");
+        if (dashboardActive) dashboardActive.classList.add("active");
+        
+        loadLogsTable(0);
+    });
+
+    function triggerHistorySearch() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            loadLogsTable(0);
+        }, 400);
+    }
+
+    async function loadLogsTable(offset = 0) {
+        currentOffset = offset;
+        const searchInput = document.getElementById("history-search").value;
+        const sortCol = document.getElementById("history-sort-col").value;
+        const sortOrder = document.getElementById("history-sort-order").value;
+        
+        const tableBody = document.getElementById("logs-table-body");
+        const loadingState = document.getElementById("table-loading-state");
+        const emptyState = document.getElementById("table-empty-state");
+        
+        tableBody.innerHTML = "";
+        loadingState.classList.remove("hidden");
+        emptyState.classList.add("hidden");
+        
+        try {
+            const res = await fetch(`/api/history?limit=${recordsLimit}&offset=${offset}&search=${encodeURIComponent(searchInput)}&sort_by=${sortCol}&sort_order=${sortOrder}`);
+            const data = await res.json();
+            
+            loadingState.classList.add("hidden");
+            
+            if (!data.records || data.records.length === 0) {
+                emptyState.classList.remove("hidden");
+                updatePaginationControls(0, 0, 0);
+                return;
+            }
+            
+            data.records.forEach(r => {
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-[var(--table-row-hover)] transition-colors group";
+                
+                const statusClass = r.pump_status === 1 ? 'text-emerald-400 font-bold' : 'text-theme-muted';
+                const statusText = r.pump_status === 1 ? 'ACTIVE' : 'STANDBY';
+                
+                tr.innerHTML = `
+                    <td class="py-3 px-6 text-theme-muted">#${r.id}</td>
+                    <td class="py-3 px-6 font-semibold text-theme-primary">${r.date}</td>
+                    <td class="py-3 px-6 text-theme-secondary">${r.time}</td>
+                    <td class="py-3 px-6 text-right text-blue-400 font-bold">${r.voltage.toFixed(1)}V</td>
+                    <td class="py-3 px-6 text-right text-cyan-400 font-semibold">${r.current.toFixed(2)}A</td>
+                    <td class="py-3 px-6 text-right text-purple-400 font-semibold">${r.power.toFixed(1)}W</td>
+                    <td class="py-3 px-6 text-center"><span class="${statusClass} text-[10px] tracking-wider sub-card px-2.5 py-0.5 rounded-md font-mono">${statusText}</span></td>
+                    <td class="py-3 px-6 text-right text-amber-500 font-semibold">${r.runtime.toFixed(2)} hr</td>
+                    <td class="py-3 px-6 text-right text-emerald-400 font-semibold">${r.energy.toFixed(4)} kWh</td>
+                    <td class="py-3 px-6 text-center">
+                        <button onclick="deleteRecordItem(${r.id})" class="p-1.5 rounded-lg bg-red-950/20 border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white transition-all text-[11px]" title="Delete Record">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+            
+            updatePaginationControls(data.total, offset, data.records.length);
+            
+        } catch (e) {
+            console.error("Error loading history logs:", e);
+            loadingState.classList.add("hidden");
+            emptyState.classList.remove("hidden");
+        }
+    }
+
+    function updatePaginationControls(total, offset, count) {
+        document.getElementById("pag-total").textContent = total;
+        document.getElementById("pag-start").textContent = total > 0 ? offset + 1 : 0;
+        document.getElementById("pag-end").textContent = offset + count;
+        
+        const prevBtn = document.getElementById("btn-pag-prev");
+        const nextBtn = document.getElementById("btn-pag-next");
+        
+        prevBtn.disabled = offset === 0;
+        nextBtn.disabled = offset + count >= total;
+    }
+
+    function changePage(direction) {
+        const nextOffset = currentOffset + (direction * recordsLimit);
+        loadLogsTable(nextOffset);
+    }
+
+    async function deleteRecordItem(id) {
+        if (!confirm(`Delete telemetry entry #${id} permanently?`)) return;
+        
+        try {
+            const res = await fetch(`/api/history/${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) {
+                if (window.showToast) window.showToast("success", `Record #${id} successfully purged from DB.`);
+                loadLogsTable(currentOffset);
+            } else {
+                alert("Purge failed: " + data.message);
+            }
+        } catch (e) {
+            console.error("Error deleting log:", e);
+        }
+    }
+
+    function exportToCSV() {
+        const table = document.getElementById("logs-data-table");
+        let csv = [];
+        const rows = table.querySelectorAll("tr");
+        
+        for (let i = 0; i < rows.length; i++) {
+            let row = [], cols = rows[i].querySelectorAll("td, th");
+            for (let j = 0; j < cols.length - 1; j++) {
+                let cellData = cols[j].innerText.trim().replace(/"/g, '""');
+                row.push('"' + cellData + '"');
+            }
+            csv.push(row.join(","));
+        }
+        
+        const csvContent = "data:text/csv;charset=utf-8," + csv.join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `solar_sync_logs_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function exportToExcel() {
+        const table = document.getElementById("logs-data-table");
+        const clonedTable = table.cloneNode(true);
+        clonedTable.querySelectorAll("tr").forEach(tr => {
+            const lastCell = tr.lastElementChild;
+            if (lastCell) lastCell.remove();
+        });
+        
+        const html = clonedTable.outerHTML;
+        const url = 'data:application/vnd.ms-excel,' + encodeURIComponent(html);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `solar_sync_analytics_${new Date().toISOString().slice(0,10)}.xls`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+{% endblock %}
