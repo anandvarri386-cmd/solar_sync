@@ -1,5 +1,5 @@
 /*
- * SolarSync AI - Commercial ESP32 IoT Node Controller
+ * SolarSync AI - Commercial ESP32 IoT Node Controller (Cloud Edition)
  * 
  * Hardware Wiring Map:
  * - Voltage Sensor (0-25V Divider): Signal Pin -> GPIO 35 (ADC1_CH7)
@@ -9,15 +9,16 @@
  */
 
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 
-// 1. Wi-Fi Credentials
+// 1. Wi-Fi Credentials (make sure phone hotspot band is 2.4 GHz)
 const char* ssid = "realme P1 5G";
 const char* password = "Anand123";
 
-// 2. Server Gateway URL (Laptop Hotspot IP: 10.250.93.242 on Port 5000)
-const char* serverUrl = "http://10.250.93.242:5000/api/esp32/data";
+// 2. Server Gateway URL (Your Live Render Cloud Server)
+const char* serverUrl = "https://solar-sync.onrender.com/api/esp32/data";
 
 // 3. Customer & Pump Device Credentials (from your SolarSync account settings)
 const char* deviceId  = "PUMP-SOLAR-1001";
@@ -50,7 +51,7 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
   
-  Serial.println("\n--- SolarSync AI ESP32 Initializing ---");
+  Serial.println("\n--- SolarSync AI Cloud IoT Node Initializing ---");
   Serial.print("Device ID: ");
   Serial.println(deviceId);
   
@@ -83,9 +84,9 @@ void setup() {
   
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println("\n[SUCCESS] Wi-Fi Connected!");
-    Serial.print("ESP32 IP Address: ");
+    Serial.print("ESP32 Local IP: ");
     Serial.println(WiFi.localIP());
-    Serial.print("Target Server: ");
+    Serial.print("Cloud Server Gateway: ");
     Serial.println(serverUrl);
   } else {
     Serial.println("\n[ERROR] Could not connect to Wi-Fi hotspot.");
@@ -151,7 +152,7 @@ void loop() {
       cumulativeEnergyKWh += (power * (timeStepSeconds / 3600.0)) / 1000.0;
     }
     
-    // 5. Transmit telemetry to Cloud / Flask Server
+    // 5. Transmit telemetry to Render Cloud Server
     transmitTelemetry(voltage, current, power);
   }
 }
@@ -195,10 +196,14 @@ double readCurrent() {
 }
 
 void transmitTelemetry(double voltage, double current, double power) {
+  // Use WiFiClientSecure to connect securely to HTTPS cloud server
+  WiFiClientSecure client;
+  client.setInsecure(); // Allows secure SSL connection to Render without hardcoded certificate expiration issues
+  
   HTTPClient http;
-  http.begin(serverUrl);
+  http.begin(client, serverUrl);
   http.addHeader("Content-Type", "application/json");
-  http.setTimeout(3000); // 3s timeout
+  http.setTimeout(5000); // 5s timeout for cloud
   
   // Build JSON Document with Device Authentication
   StaticJsonDocument<256> doc;
@@ -230,13 +235,13 @@ void transmitTelemetry(double voltage, double current, double power) {
         currentSensorOffset = resDoc["current_offset"];
       }
       
-      // Update physical relay state based on server command
+      // Update physical relay state based on cloud command
       digitalWrite(RELAY_PIN, (targetStatus == 1) ? RELAY_ON : RELAY_OFF);
     }
     Serial.printf("[%s | HTTP %d] V: %.1fV | I: %.2fA | P: %.1fW | Pump: %s\n", 
                   deviceId, httpResponseCode, voltage, current, power, pumpStatus == 1 ? "ON (RUNNING)" : "OFF (STANDBY)");
   } else {
-    Serial.printf("[HTTP FAIL] Code: %d (Check server URL: %s)\n", httpResponseCode, serverUrl);
+    Serial.printf("[HTTP FAIL] Code: %d (Check Cloud URL: %s)\n", httpResponseCode, serverUrl);
   }
   
   http.end();
