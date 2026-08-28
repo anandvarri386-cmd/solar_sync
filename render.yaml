@@ -1,13 +1,13 @@
 services:
   - type: web
-    name: solarsync-ai
+    name: solar_sync
     env: python
     region: oregon
     plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:$PORT app:app
+    startCommand: python app.py
     envVars:
       - key: PYTHON_VERSION
-        value: 3.12.0
+        value: 3.11.9
       - key: SECRET_KEY
         generateValue: true
