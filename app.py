@@ -122,6 +122,8 @@ def create_app():
         except Exception as e:
             print(f"Error in SocketIO simulated telemetry receiver: {e}")
 
+    return app, socketio
+
 # Module-level instances for WSGI/Gunicorn servers
 app, socketio = create_app()
 
