@@ -10,35 +10,7 @@
 <!-- Page Content -->
 <div class="relative z-10 space-y-6">
 
-    <!-- 1. Hero Section Banner -->
-    <section class="glass-card glow-cyan p-6 md:p-8 flex flex-col md:flex-row items-center justify-between overflow-hidden relative">
-        <div class="space-y-2 text-center md:text-left">
-            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-[var(--card-bg-subtle)] border border-[var(--card-border-subtle)] text-[var(--accent-cyan)] text-xs font-mono tracking-wider uppercase">
-                <i class="fa-solid fa-bolt animate-bounce text-[10px]"></i>
-                <span>Smart Solar Pump Node</span>
-            </div>
-            <h2 class="text-2xl md:text-3.5xl font-extrabold tracking-tight text-theme-primary font-mono leading-none">
-                Solar Pump Monitoring & Control
-            </h2>
-            <p class="text-xs md:text-sm text-theme-secondary max-w-xl">
-                Real-time telemetry monitoring for Voltage, Current, Power, Duration, and Remote Relay Control.
-            </p>
-        </div>
-        
-        <!-- Quick Action Panel on Hero -->
-        <div class="mt-4 md:mt-0 flex flex-wrap gap-2.5 justify-center">
-            <button onclick="toggleSimulationState()" id="btn-hero-sim" class="px-4 py-2 bg-purple-950/20 border border-purple-500/30 hover:border-purple-400 text-purple-400 rounded-xl text-xs font-medium flex items-center space-x-1.5 transition-all duration-300 btn-ripple shadow-sm shadow-purple-900/10">
-                <i class="fa-solid fa-gamepad"></i>
-                <span id="txt-hero-sim">Simulate Telemetry</span>
-            </button>
-            <a href="/history" class="px-4 py-2 sub-card hover:border-[var(--accent-cyan)]/30 text-theme-secondary hover:text-theme-primary rounded-xl text-xs font-medium flex items-center space-x-1.5 transition-all duration-300 btn-ripple">
-                <i class="fa-solid fa-database text-[var(--accent-cyan)]"></i>
-                <span>View History Logs</span>
-            </a>
-        </div>
-    </section>
-
-    <!-- 2. Core Stats Grid (5 Main Metrics: Status, Current, Voltage, Power, Duration) -->
+    <!-- 1. Core Stats Grid (5 Main Metrics: Status, Current, Voltage, Power, Duration) -->
     <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         
         <!-- Metric 1: Pump Status -->
@@ -116,104 +88,53 @@
 
     </section>
 
-    <!-- 3. Main Row: Pump ON / OFF Controls & Live Telemetry Feed -->
-    <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        <!-- Left: Pump ON and OFF Controls (6/12 cols) -->
-        <div class="lg:col-span-6 glass-card p-6 flex flex-col justify-between" id="control-panel">
-            <div class="space-y-4">
-                <div class="flex items-center justify-between border-b border-[var(--card-border-subtle)] pb-4">
-                    <h3 class="text-lg font-bold tracking-tight text-theme-primary font-mono flex items-center space-x-2">
-                        <i class="fa-solid fa-power-off text-[var(--accent-cyan)]"></i>
-                        <span>Pump Control (ON / OFF)</span>
-                    </h3>
-                    <span class="text-xs font-mono text-[var(--accent-emerald)] flex items-center space-x-1.5">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                        <span>DIRECT RELAY</span>
-                    </span>
-                </div>
-
-                <p class="text-xs text-theme-secondary leading-relaxed">
-                    Click to trigger the remote relay on ESP32 (GPIO 26) instantly to start or stop the solar pump.
-                </p>
-
-                <!-- Dual Action Toggle Buttons (PUMP ON & PUMP OFF) -->
-                <div class="grid grid-cols-2 gap-4 pt-2">
-                    <button onclick="requestPumpState(1)" id="btn-pump-on" class="h-20 bg-emerald-950/30 border border-emerald-500/30 hover:border-emerald-400 text-emerald-400 font-bold rounded-2xl flex flex-col items-center justify-center space-y-1.5 transition-all duration-300 btn-ripple shadow-md hover:scale-[1.02] active:scale-[0.98]">
-                        <i class="fa-solid fa-play text-2xl"></i>
-                        <span class="text-xs tracking-wider uppercase font-bold">TURN PUMP ON</span>
-                    </button>
-                    <button onclick="requestPumpState(0)" id="btn-pump-off" class="h-20 sub-card border border-white/5 hover:border-red-500/30 text-theme-secondary hover:text-red-400 font-bold rounded-2xl flex flex-col items-center justify-center space-y-1.5 transition-all duration-300 btn-ripple shadow-md hover:scale-[1.02] active:scale-[0.98]">
-                        <i class="fa-solid fa-stop text-2xl"></i>
-                        <span class="text-xs tracking-wider uppercase font-bold">TURN PUMP OFF</span>
-                    </button>
-                </div>
-                
-                <!-- Target Command Indicator -->
-                <div class="flex items-center justify-between px-4 py-3 sub-card text-xs font-mono text-theme-secondary">
-                    <span>Active Relay Command:</span>
-                    <span id="target-cmd-val" class="font-bold text-red-400">PUMP STOPPED (OFF)</span>
-                </div>
-            </div>
-
-            <!-- Emergency Shutdown Control -->
-            <div class="pt-6 border-t border-[var(--card-border-subtle)] mt-6">
-                <button onclick="triggerEmergencyStop()" class="w-full py-3.5 bg-red-600 hover:bg-red-500 text-white font-black text-xs tracking-widest uppercase rounded-2xl glow-red hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 btn-ripple flex items-center justify-center space-x-2 shadow-lg shadow-red-900/30">
-                    <i class="fa-solid fa-triangle-exclamation animate-pulse"></i>
-                    <span>EMERGENCY SHUTDOWN (ESC / SPACE)</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Right: Live Edge Telemetry Matrix (6/12 cols) -->
-        <div class="lg:col-span-6 glass-card p-6 flex flex-col justify-between" id="live-monitoring">
+    <!-- 2. Pump ON / OFF Direct Control Panel -->
+    <section class="glass-card p-6" id="control-panel">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-[var(--card-border-subtle)] pb-4 mb-6 gap-4">
             <div>
-                <div class="flex items-center justify-between border-b border-[var(--card-border-subtle)] pb-4 mb-4">
-                    <h3 class="text-lg font-bold tracking-tight text-theme-primary font-mono flex items-center space-x-2">
-                        <i class="fa-solid fa-satellite-dish text-[var(--accent-cyan)]"></i>
-                        <span>Live Sensor Matrix</span>
-                    </h3>
-                    <span class="text-xs text-theme-muted font-mono" id="txt-last-update-time">Last update: --:--:--</span>
-                </div>
-
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
-                    <div class="sub-card p-3.5 text-center">
-                        <div class="text-[10px] text-theme-muted uppercase font-mono">Current Sensor</div>
-                        <div class="text-xl font-bold font-mono mt-1 text-[var(--accent-cyan)]"><span id="live-current">0.00</span> A</div>
-                    </div>
-                    <div class="sub-card p-3.5 text-center">
-                        <div class="text-[10px] text-theme-muted uppercase font-mono">Voltage Sensor</div>
-                        <div class="text-xl font-bold font-mono mt-1 text-[var(--accent-blue)]"><span id="live-voltage">0.0</span> V</div>
-                    </div>
-                    <div class="sub-card p-3.5 text-center">
-                        <div class="text-[10px] text-theme-muted uppercase font-mono">Pump Power</div>
-                        <div class="text-xl font-bold font-mono mt-1 text-[var(--accent-purple)]"><span id="live-power">0.0</span> W</div>
-                    </div>
-                    <div class="sub-card p-3.5 text-center">
-                        <div class="text-[10px] text-theme-muted uppercase font-mono">State Machine</div>
-                        <div class="text-xl font-bold font-mono mt-1 text-theme-muted" id="live-status">OFFLINE</div>
-                    </div>
-                    <div class="sub-card p-3.5 text-center">
-                        <div class="text-[10px] text-theme-muted uppercase font-mono">Hardware Status</div>
-                        <div class="text-xl font-bold font-mono mt-1 text-red-500" id="live-esp32">OFFLINE</div>
-                    </div>
-                    <div class="sub-card p-3.5 text-center">
-                        <div class="text-[10px] text-theme-muted uppercase font-mono">Energy Today</div>
-                        <div class="text-xl font-bold font-mono mt-1 text-[var(--accent-emerald)]"><span id="val-energy">0.000</span> <span class="text-xs">kWh</span></div>
-                    </div>
-                </div>
+                <h3 class="text-xl font-bold tracking-tight text-theme-primary font-mono flex items-center space-x-2.5">
+                    <i class="fa-solid fa-power-off text-[var(--accent-cyan)]"></i>
+                    <span>Pump Remote Control</span>
+                </h3>
+                <p class="text-xs text-theme-secondary mt-1">
+                    Click to trigger the relay on ESP32 (GPIO 26) to start or stop your solar water pump.
+                </p>
             </div>
-
-            <!-- Quick Link to History Logs -->
-            <div class="pt-6 border-t border-[var(--card-border-subtle)] mt-6 flex items-center justify-between">
-                <span class="text-xs text-theme-secondary">Access complete historical records & logs:</span>
-                <a href="/history" class="px-4 py-2.5 bg-[var(--accent-cyan)]/15 border border-[var(--accent-cyan)]/30 hover:border-[var(--accent-cyan)] text-[var(--accent-cyan)] rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-300 flex items-center space-x-1.5">
-                    <span>Full Logs & Export</span>
-                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
-                </a>
+            <div class="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-emerald-950/20 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-semibold">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span>INSTANT DIRECT RELAY</span>
             </div>
         </div>
 
+        <!-- Dual Action Buttons (Large Touch-Friendly) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <button onclick="requestPumpState(1)" id="btn-pump-on" class="h-24 bg-emerald-950/30 border-2 border-emerald-500/40 hover:border-emerald-400 text-emerald-400 font-bold rounded-2xl flex items-center justify-center space-x-4 transition-all duration-300 btn-ripple shadow-lg hover:scale-[1.01] active:scale-[0.99] glow-green">
+                <i class="fa-solid fa-play text-3xl"></i>
+                <div class="text-left">
+                    <div class="text-base tracking-wider uppercase font-black">TURN PUMP ON</div>
+                    <div class="text-[11px] text-emerald-400/80 font-mono">Activate Relay (GPIO 26 LOW)</div>
+                </div>
+            </button>
+            <button onclick="requestPumpState(0)" id="btn-pump-off" class="h-24 sub-card border-2 border-white/10 hover:border-red-500/40 text-theme-secondary hover:text-red-400 font-bold rounded-2xl flex items-center justify-center space-x-4 transition-all duration-300 btn-ripple shadow-lg hover:scale-[1.01] active:scale-[0.99]">
+                <i class="fa-solid fa-stop text-3xl"></i>
+                <div class="text-left">
+                    <div class="text-base tracking-wider uppercase font-black">TURN PUMP OFF</div>
+                    <div class="text-[11px] text-theme-muted font-mono">Deactivate Relay (GPIO 26 HIGH)</div>
+                </div>
+            </button>
+        </div>
+        
+        <!-- Active Command Status Bar -->
+        <div class="flex flex-col sm:flex-row items-center justify-between px-5 py-3.5 sub-card text-xs font-mono text-theme-secondary mt-5 rounded-xl gap-2">
+            <div class="flex items-center space-x-2">
+                <span>Active Relay State:</span>
+                <span id="target-cmd-val" class="font-bold text-red-400">PUMP STOPPED (OFF)</span>
+            </div>
+            <button onclick="triggerEmergencyStop()" class="text-xs text-red-400 hover:text-red-300 font-bold flex items-center space-x-1.5 transition-colors">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Emergency Stop</span>
+            </button>
+        </div>
     </section>
 
     <!-- 4. Related Performance Graphs Section -->
