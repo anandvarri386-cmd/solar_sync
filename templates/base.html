@@ -7,14 +7,6 @@
     <meta name="description" content="Premium IoT Smart Solar DC Pump Monitoring & Control Dashboard. Built with Flask, SQLite, and Tailwind CSS.">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%2300f5ff' d='M12 2.25a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-1.5 0V3a.75.75 0 0 1 .75-.75zM6.16 5.1a.75.75 0 0 1 1.06 0l1.59 1.59a.75.75 0 1 1-1.06 1.06L6.16 6.16a.75.75 0 0 1 0-1.06zm11.68 0a.75.75 0 0 1 0 1.06l-1.59 1.59a.75.75 0 1 1-1.06-1.06l1.59-1.59a.75.75 0 0 1 1.06 0zM3 11.25a.75.75 0 0 1 .75.75v.01a.75.75 0 0 1 0 1.5H3.75a.75.75 0 0 1-.75-.75v-.01a.75.75 0 0 1 .75-.75zm16.5 0a.75.75 0 0 1 .75.75v.01a.75.75 0 0 1 0 1.5h-.01a.75.75 0 0 1-.75-.75v-.01a.75.75 0 0 1 .75-.75zM6.16 17.84a.75.75 0 0 1 1.06 1.06l-1.59 1.59a.75.75 0 1 1-1.06-1.06l1.59-1.59zm11.68 0a.75.75 0 0 1 0 1.06l-1.59-1.59a.75.75 0 1 1 1.06-1.06l1.59 1.59zM12 18.75a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-1.5 0V19.5a.75.75 0 0 1 .75-.75zM12 7.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9z'/%3E%3C/svg%3E">
     
-    <!-- PWA Web App Manifest & Mobile Meta Tags -->
-    <link rel="manifest" href="/static/manifest.json">
-    <meta name="theme-color" content="#040714">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="SolarSync">
-    
     <!-- Tailwind CSS v4 Play CDN -->
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
     <!-- GSAP for animations -->
@@ -99,12 +91,8 @@
                 </nav>
             </div>
             
-            <!-- Sidebar Footer / PWA Install & Logout -->
-            <div class="p-4 theme-sidebar-footer space-y-2">
-                <button onclick="installPWAApp()" id="btn-pwa-install" class="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-cyan-950/40 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/40 rounded-xl text-xs font-semibold tracking-wider uppercase transition-all duration-300 btn-ripple shadow-sm glow-cyan">
-                    <i class="fa-solid fa-mobile-screen-button"></i>
-                    <span>Install App</span>
-                </button>
+            <!-- Sidebar Footer / Logout -->
+            <div class="p-4 theme-sidebar-footer">
                 <a href="/logout" class="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-red-950/20 border border-red-500/20 text-red-400 hover:bg-red-900/20 hover:text-red-300 rounded-xl text-xs font-semibold tracking-wider uppercase transition-all duration-300 btn-ripple">
                     <i class="fa-solid fa-arrow-right-from-bracket"></i>
                     <span>Log Out</span>

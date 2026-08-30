@@ -17,6 +17,22 @@ document.addEventListener("DOMContentLoaded", () => {
     initLoader();
 });
 
+// Actively unregister and remove any previously installed Service Workers & PWA caches
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (let registration of registrations) {
+            registration.unregister();
+        }
+    });
+}
+if ('caches' in window) {
+    caches.keys().then((names) => {
+        for (let name of names) {
+            caches.delete(name);
+        }
+    });
+}
+
 // Suppress automatic browser PWA "Install App" banner / prompt
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
