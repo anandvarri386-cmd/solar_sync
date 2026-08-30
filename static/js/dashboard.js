@@ -206,14 +206,14 @@ window.requestPumpState = requestPumpState;
 function sendPumpStateCommand(state) {
     if (window.socket && window.socket.connected) {
         window.socket.emit('pump_control', { target_status: state });
-    } else {
-        // Fallback REST call in case websocket is connecting
-        fetch('/api/esp32/data', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pump_status: state })
-        }).catch(err => console.log(err));
     }
+    // Reliable REST transmission for immediate session logging
+    fetch('/api/pump/state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target_status: state, pump_status: state })
+    }).catch(err => console.log(err));
+    
     updatePumpControlsUI(state);
 }
 

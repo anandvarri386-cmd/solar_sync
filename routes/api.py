@@ -101,6 +101,44 @@ def get_daily_runtime_summary():
     summary = get_daily_summary(pump_device_id=device_id)
     return jsonify({"status": "success", "pump_device_id": device_id, "daily_summary": summary})
 
+@api_bp.route('/api/pump/state', methods=['GET', 'POST'])
+def handle_pump_state_route():
+    """Endpoint for web dashboard and mobile to toggle pump state (ON/OFF) and register session."""
+    global DEVICE_TARGET_STATES, DEVICE_LAST_TELEMETRY
+    device_id = get_session_device_id()
+    
+    if request.method == 'GET':
+        return jsonify({"status": "success", "pump_device_id": device_id, "target_status": DEVICE_TARGET_STATES.get(device_id, 0)})
+        
+    data = request.get_json(silent=True) or {}
+    target = int(data.get('target_status', data.get('pump_status', 0)))
+    device_id = data.get('pump_device_id') or device_id
+    
+    DEVICE_TARGET_STATES[device_id] = target
+    
+    # Grab latest voltage/power or defaults
+    last = DEVICE_LAST_TELEMETRY.get(device_id, {})
+    v = last.get('voltage', 18.0) if target == 1 else 0.0
+    i = last.get('current', 2.2) if target == 1 else 0.0
+    p = last.get('power', round(v * i, 1)) if target == 1 else 0.0
+    
+    # Record session event immediately
+    record_telemetry_and_session(
+        voltage=v,
+        current=i,
+        power=p,
+        pump_status=target,
+        runtime=0.0,
+        energy=0.0,
+        pump_device_id=device_id
+    )
+    
+    socketio = get_socketio()
+    if socketio:
+        socketio.emit('pump_command', {"pump_device_id": device_id, "target_status": target})
+        
+    return jsonify({"status": "success", "pump_device_id": device_id, "target_status": target})
+
 @api_bp.route('/api/settings', methods=['GET', 'POST'])
 def handle_settings():
     """Returns or updates calibration settings."""

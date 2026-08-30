@@ -59,12 +59,28 @@ def create_app():
     @socketio.on('pump_control')
     def handle_pump_control(data):
         """Receives controls commands from dashboard clients for a specific pump."""
+        from models.pump_data import record_telemetry_and_session
         device_id = data.get('pump_device_id') or session.get('pump_device_id', 'PUMP-SOLAR-1001')
         target = int(data.get('target_status', 0))
         print(f"SocketIO: Pump control request for {device_id} -> {target}")
         
         # Update target state globally in API dictionaries
         DEVICE_TARGET_STATES[device_id] = target
+        
+        # Record session immediately in database
+        last = DEVICE_LAST_TELEMETRY.get(device_id, {})
+        v = last.get('voltage', 18.0) if target == 1 else 0.0
+        i = last.get('current', 2.2) if target == 1 else 0.0
+        p = last.get('power', round(v * i, 1)) if target == 1 else 0.0
+        record_telemetry_and_session(
+            voltage=v,
+            current=i,
+            power=p,
+            pump_status=target,
+            runtime=0.0,
+            energy=0.0,
+            pump_device_id=device_id
+        )
         
         # Broadcast the command to all listening clients
         socketio.emit('pump_command', {

@@ -13,7 +13,7 @@ def get_db_connection():
     return conn
 
 def init_db():
-    """Initializes the database tables with clean schema (zero sample data)."""
+    """Initializes the database tables with clean schema and handles auto-migrations."""
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -55,6 +55,7 @@ def init_db():
             date TEXT NOT NULL,
             start_time TEXT NOT NULL,
             end_time TEXT,
+            duration_seconds REAL DEFAULT 0.0,
             duration_minutes REAL DEFAULT 0.0,
             duration_str TEXT DEFAULT '0m 0s',
             avg_voltage REAL DEFAULT 0.0,
@@ -66,6 +67,13 @@ def init_db():
         )
     ''')
     
+    # Auto-migration safeguard for existing database files
+    cursor.execute("PRAGMA table_info(pump_sessions)")
+    sess_cols = [row[1] for row in cursor.fetchall()]
+    if 'duration_seconds' not in sess_cols and len(sess_cols) > 0:
+        print("Migrating pump_sessions: Adding duration_seconds column...")
+        cursor.execute("ALTER TABLE pump_sessions ADD COLUMN duration_seconds REAL DEFAULT 0.0")
+        
     conn.commit()
     
     # 4. Seed default demo customer if users table is empty
@@ -91,14 +99,14 @@ def init_db():
     conn.close()
 
 def clear_all_history():
-    """Purges all sample/mock history records from the database."""
+    """Purges all history records from the database."""
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
         cursor.execute("DELETE FROM pump_sessions")
         cursor.execute("DELETE FROM pump_data")
         conn.commit()
-        print("All sample history purged successfully.")
+        print("All history purged successfully.")
     except Exception as e:
         print(f"Error purging history: {e}")
     finally:
