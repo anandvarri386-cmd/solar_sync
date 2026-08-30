@@ -346,3 +346,41 @@ function triggerLogout() {
         showToast("warning", "Admin Node Session Terminated. Dashboard locked in View Only mode.");
     }
 }
+
+/* ==========================================================================
+   PWA (Progressive Web App) Mobile Installer
+   ========================================================================== */
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/static/sw.js')
+            .then(reg => console.log('SolarSync PWA Service Worker Registered:', reg.scope))
+            .catch(err => console.warn('PWA Service Worker Registration Failed:', err));
+    });
+}
+
+let deferredPwaPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPwaPrompt = e;
+    const installBtn = document.getElementById('btn-pwa-install');
+    if (installBtn) {
+        installBtn.classList.remove('hidden');
+    }
+});
+
+function installPWAApp() {
+    if (deferredPwaPrompt) {
+        deferredPwaPrompt.prompt();
+        deferredPwaPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('User installed SolarSync App');
+                const installBtn = document.getElementById('btn-pwa-install');
+                if (installBtn) installBtn.classList.add('hidden');
+            }
+            deferredPwaPrompt = null;
+        });
+    } else {
+        alert("To install SolarSync as an app on your mobile phone:\n\n📱 Android (Chrome):\n1. Tap the 3 dots (⋮) in Chrome.\n2. Tap 'Add to Home screen' or 'Install app'.\n\n🍎 iPhone (Safari):\n1. Tap the Share button (square with arrow up).\n2. Tap 'Add to Home Screen'.");
+    }
+}
+window.installPWAApp = installPWAApp;
