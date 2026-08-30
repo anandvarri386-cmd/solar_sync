@@ -4,8 +4,8 @@ import json
 import os
 
 from models.pump_data import (
-    insert_reading, get_latest_reading, get_history, 
-    delete_record, get_analytics_summary
+    record_telemetry_and_session, get_latest_reading, get_history, 
+    delete_record, get_analytics_summary, get_daily_summary
 )
 from models.user import get_user_by_device_id, get_user_by_id, regenerate_api_key
 from utils.calibrations import load_config, save_config
@@ -94,6 +94,13 @@ def get_energy_analytics():
     analytics = get_analytics_summary(pump_device_id=device_id)
     return jsonify(analytics)
 
+@api_bp.route('/api/daily_summary', methods=['GET'])
+def get_daily_runtime_summary():
+    """Returns total pump runtime duration for every day."""
+    device_id = request.args.get('device_id') or get_session_device_id()
+    summary = get_daily_summary(pump_device_id=device_id)
+    return jsonify({"status": "success", "pump_device_id": device_id, "daily_summary": summary})
+
 @api_bp.route('/api/settings', methods=['GET', 'POST'])
 def handle_settings():
     """Returns or updates calibration settings."""
@@ -179,12 +186,12 @@ def receive_esp32_telemetry():
         
     calibrated_power = round(calibrated_voltage * calibrated_current, 2)
     
-    # Save reading to SQLite database scoped to this pump device ID
-    insert_reading(
+    # Record telemetry & update pump run session (Switched ON / OFF events)
+    record_telemetry_and_session(
         voltage=calibrated_voltage,
         current=calibrated_current,
         power=calibrated_power,
-        status=pump_status,
+        pump_status=pump_status,
         runtime=runtime,
         energy=energy,
         pump_device_id=device_id

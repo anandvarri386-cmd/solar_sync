@@ -32,7 +32,7 @@ def init_db():
         )
     ''')
     
-    # 2. Create pump_data table with pump_device_id association
+    # 2. Create pump_data table for raw rolling telemetry
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS pump_data (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -48,16 +48,28 @@ def init_db():
         )
     ''')
     
-    # Check if pump_device_id column exists in pump_data (migration safeguard)
-    cursor.execute("PRAGMA table_info(pump_data)")
-    columns = [row[1] for row in cursor.fetchall()]
-    if 'pump_device_id' not in columns:
-        print("Migrating pump_data table: Adding pump_device_id column...")
-        cursor.execute("ALTER TABLE pump_data ADD COLUMN pump_device_id TEXT DEFAULT 'PUMP-SOLAR-1001'")
-        
+    # 3. Create pump_sessions table (Stores ON/OFF event history and daily runtime)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS pump_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            pump_device_id TEXT NOT NULL,
+            date TEXT NOT NULL,
+            start_time TEXT NOT NULL,
+            end_time TEXT,
+            duration_minutes REAL DEFAULT 0.0,
+            duration_str TEXT DEFAULT '0m 0s',
+            avg_voltage REAL DEFAULT 0.0,
+            avg_current REAL DEFAULT 0.0,
+            avg_power REAL DEFAULT 0.0,
+            energy_kwh REAL DEFAULT 0.0,
+            status TEXT DEFAULT 'COMPLETED',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
     conn.commit()
     
-    # 3. Seed default demo customer if users table is empty
+    # 4. Seed default demo customer if users table is empty
     cursor.execute('SELECT COUNT(*) FROM users')
     user_count = cursor.fetchone()[0]
     
@@ -78,66 +90,56 @@ def init_db():
         ))
         conn.commit()
         
-    # 4. Check if pump_data has records for the demo pump
-    cursor.execute('SELECT COUNT(*) FROM pump_data WHERE pump_device_id = ?', (demo_device_id,))
-    data_count = cursor.fetchone()[0]
+    # 5. Check if pump_sessions has records for the demo pump
+    cursor.execute('SELECT COUNT(*) FROM pump_sessions WHERE pump_device_id = ?', (demo_device_id,))
+    session_count = cursor.fetchone()[0]
     
-    if data_count == 0:
-        print("Seeding demo pump historical telemetry records...")
-        seed_mock_data(conn, demo_device_id)
+    if session_count == 0:
+        print("Seeding demo pump run session history records...")
+        seed_mock_sessions(conn, demo_device_id)
     else:
-        print(f"Database contains telemetry data ({data_count} records).")
+        print(f"Database contains run session data ({session_count} sessions).")
         
     conn.close()
 
-def seed_mock_data(conn, device_id="PUMP-SOLAR-1001"):
-    """Generates 7 days of realistic solar pump telemetry for the given pump device ID."""
+def seed_mock_sessions(conn, device_id="PUMP-SOLAR-1001"):
+    """Generates 7 days of realistic pump run sessions (motor ON/OFF events and run duration)."""
     cursor = conn.cursor()
     now = datetime.now()
     
-    total_runtime = 0.0
-    total_energy = 0.0
-    
-    # Generate mock records day-by-day
+    # Generate 2 realistic pump run sessions per day for the last 7 days
     for day_offset in range(7, 0, -1):
         day_date = (now - timedelta(days=day_offset)).strftime('%Y-%m-%d')
         
-        for hour in range(24):
-            time_str = f"{hour:02d}:00:00"
-            
-            # Solar Voltage model
-            if 6 <= hour <= 18:
-                dist_from_noon = abs(hour - 12.5)
-                voltage = max(0.0, 18.0 - (dist_from_noon * 1.5) + random.uniform(-0.4, 0.4))
-            else:
-                voltage = random.uniform(0.0, 0.2)
-                
-            # Pump state logic
-            if 9 <= hour <= 16 and voltage > 10.0:
-                pump_status = 1
-                current = round(random.uniform(1.8, 2.6), 2)
-                power = round(voltage * current, 2)
-                total_runtime += 1.0
-                total_energy += (power * 1.0) / 1000.0
-            else:
-                pump_status = 0
-                current = 0.0
-                power = 0.0
-                
-            cursor.execute('''
-                INSERT INTO pump_data (pump_device_id, date, time, voltage, current, power, pump_status, runtime, energy)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                device_id,
-                day_date, 
-                time_str, 
-                round(voltage, 2), 
-                current, 
-                power, 
-                pump_status, 
-                round(total_runtime, 2), 
-                round(total_energy, 4)
-            ))
-            
+        # Session 1: Morning Irrigation Run (e.g. 09:15 to 11:45)
+        m_start = "09:15:00"
+        m_end = "11:45:00"
+        m_duration_mins = 150.0 # 2.5 hrs
+        m_duration_str = "2 hrs 30 mins"
+        m_voltage = round(random.uniform(17.2, 19.5), 1)
+        m_current = round(random.uniform(2.1, 2.5), 2)
+        m_power = round(m_voltage * m_current, 1)
+        m_energy = round((m_power * 2.5) / 1000.0, 4)
+        
+        cursor.execute('''
+            INSERT INTO pump_sessions (pump_device_id, date, start_time, end_time, duration_minutes, duration_str, avg_voltage, avg_current, avg_power, energy_kwh, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'COMPLETED')
+        ''', (device_id, day_date, m_start, m_end, m_duration_mins, m_duration_str, m_voltage, m_current, m_power, m_energy))
+        
+        # Session 2: Afternoon Irrigation Run (e.g. 13:30 to 15:45)
+        a_start = "13:30:00"
+        a_end = "15:45:00"
+        a_duration_mins = 135.0 # 2.25 hrs
+        a_duration_str = "2 hrs 15 mins"
+        a_voltage = round(random.uniform(16.8, 18.9), 1)
+        a_current = round(random.uniform(2.0, 2.4), 2)
+        a_power = round(a_voltage * a_current, 1)
+        a_energy = round((a_power * 2.25) / 1000.0, 4)
+        
+        cursor.execute('''
+            INSERT INTO pump_sessions (pump_device_id, date, start_time, end_time, duration_minutes, duration_str, avg_voltage, avg_current, avg_power, energy_kwh, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'COMPLETED')
+        ''', (device_id, day_date, a_start, a_end, a_duration_mins, a_duration_str, a_voltage, a_current, a_power, a_energy))
+        
     conn.commit()
-    print(f"Database successfully seeded with records for {device_id}.")
+    print(f"Database successfully seeded with realistic pump run history for {device_id}.")

@@ -6,12 +6,12 @@
     <!-- Hero Header Log Summary -->
     <section class="glass-card glow-cyan p-6 flex flex-col md:flex-row items-center justify-between gap-4">
         <div class="space-y-1.5 text-center md:text-left">
-            <h2 class="text-2xl font-bold tracking-tight text-theme-primary font-mono flex items-center justify-center md:justify-start space-x-2">
-                <i class="fa-solid fa-database text-[var(--accent-cyan)]"></i>
-                <span>Database Historical Logs</span>
+            <h2 class="text-2xl font-bold tracking-tight text-theme-primary font-mono flex items-center justify-center md:justify-start space-x-2.5">
+                <i class="fa-solid fa-clock-rotate-left text-[var(--accent-cyan)]"></i>
+                <span>Pump Operation & Daily Runtime History</span>
             </h2>
             <p class="text-xs text-theme-secondary">
-                Detailed list of every telemetry pulse received from ACS712 & Divider sensors on the ESP32 node.
+                Exact log of when your motor was switched ON, when it switched OFF, and total run duration for every day.
             </p>
         </div>
         <!-- Export Actions Grid -->
@@ -27,11 +27,30 @@
         </div>
     </section>
 
+    <!-- Daily Total Runtime Breakdown Cards -->
+    <section class="space-y-3">
+        <div class="flex items-center justify-between px-1">
+            <h3 class="text-xs font-bold text-[var(--accent-cyan)] font-mono uppercase tracking-wider flex items-center space-x-2">
+                <i class="fa-solid fa-calendar-day"></i>
+                <span>Daily Runtime Summary</span>
+            </h3>
+            <span class="text-[11px] text-theme-muted font-mono">Day-by-Day Total Hours</span>
+        </div>
+
+        <div id="daily-summary-cards" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+            <!-- Loaded dynamically via loadDailySummary() -->
+            <div class="glass-card p-4 text-center space-y-1">
+                <div class="text-[10px] text-theme-muted font-mono uppercase">Loading...</div>
+                <div class="h-6 sub-card shimmer rounded-md"></div>
+            </div>
+        </div>
+    </section>
+
     <!-- Search & Filter Controls -->
     <section class="glass-card p-5 grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
         <!-- Search bar -->
         <div class="md:col-span-2 relative">
-            <input type="text" id="history-search" oninput="triggerHistorySearch()" placeholder="Search logs by Date, Time, or Status..." class="w-full pl-10 pr-4 py-2.5 theme-input text-xs font-mono">
+            <input type="text" id="history-search" oninput="triggerHistorySearch()" placeholder="Search by Date, Switched ON Time, or Status..." class="w-full pl-10 pr-4 py-2.5 theme-input text-xs font-mono">
             <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-theme-muted text-xs"></i>
         </div>
         
@@ -39,13 +58,11 @@
         <div class="flex items-center space-x-2">
             <span class="text-xs text-theme-secondary font-mono whitespace-nowrap">Sort By:</span>
             <select id="history-sort-col" onchange="loadLogsTable(0)" class="w-full px-3 py-2 theme-select text-xs font-mono">
-                <option value="id" selected>LOG ID</option>
+                <option value="id" selected>EVENT ID</option>
                 <option value="date">DATE</option>
-                <option value="voltage">VOLTAGE</option>
-                <option value="current">CURRENT</option>
-                <option value="power">POWER</option>
-                <option value="runtime">RUNTIME</option>
-                <option value="energy">ENERGY</option>
+                <option value="start_time">SWITCHED ON</option>
+                <option value="duration_minutes">DURATION</option>
+                <option value="energy_kwh">ENERGY</option>
             </select>
         </div>
 
@@ -59,21 +76,20 @@
         </div>
     </section>
 
-    <!-- Historical Data Table card -->
+    <!-- Operation Session History Table Card -->
     <section class="glass-card overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse theme-table" id="logs-data-table">
                 <thead>
                     <tr class="text-[10px] text-[var(--accent-cyan)] font-bold uppercase tracking-wider font-mono">
-                        <th class="py-4 px-6">ID</th>
+                        <th class="py-4 px-6">Event #</th>
                         <th class="py-4 px-6">Date</th>
-                        <th class="py-4 px-6">Time</th>
-                        <th class="py-4 px-6 text-right">Voltage</th>
-                        <th class="py-4 px-6 text-right">Current</th>
-                        <th class="py-4 px-6 text-right">Power</th>
+                        <th class="py-4 px-6"><i class="fa-solid fa-power-off text-emerald-400 mr-1"></i> Switched ON</th>
+                        <th class="py-4 px-6"><i class="fa-solid fa-power-off text-red-400 mr-1"></i> Switched OFF</th>
+                        <th class="py-4 px-6 text-right"><i class="fa-solid fa-hourglass-half text-amber-400 mr-1"></i> Total Runtime</th>
+                        <th class="py-4 px-6 text-right">Avg Power</th>
+                        <th class="py-4 px-6 text-right">Energy (kWh)</th>
                         <th class="py-4 px-6 text-center">Status</th>
-                        <th class="py-4 px-6 text-right">Session Run</th>
-                        <th class="py-4 px-6 text-right">Energy</th>
                         <th class="py-4 px-6 text-center">Action</th>
                     </tr>
                 </thead>
@@ -89,8 +105,8 @@
                 <i class="fa-solid fa-hourglass-empty"></i>
             </div>
             <div class="space-y-1">
-                <h4 class="text-sm font-bold text-theme-primary uppercase tracking-wider font-mono">No telemetry records found</h4>
-                <p class="text-xs text-theme-muted max-w-xs mx-auto">Database table is empty. Enable simulator to populate live rows.</p>
+                <h4 class="text-sm font-bold text-theme-primary uppercase tracking-wider font-mono">No pump run history yet</h4>
+                <p class="text-xs text-theme-muted max-w-xs mx-auto">When your solar pump is switched ON, every run event and duration will be logged here.</p>
             </div>
         </div>
 
@@ -104,7 +120,7 @@
         <!-- Pagination Controls -->
         <div class="px-6 py-4 flex flex-col sm:flex-row items-center justify-between border-t border-[var(--card-border-subtle)] sub-card gap-4 rounded-none">
             <div class="text-xs text-theme-muted font-mono">
-                Showing <span id="pag-start" class="text-theme-primary font-semibold">0</span> to <span id="pag-end" class="text-theme-primary font-semibold">0</span> of <span id="pag-total" class="text-theme-primary font-semibold">0</span> records
+                Showing <span id="pag-start" class="text-theme-primary font-semibold">0</span> to <span id="pag-end" class="text-theme-primary font-semibold">0</span> of <span id="pag-total" class="text-theme-primary font-semibold">0</span> run sessions
             </div>
             
             <div class="flex items-center space-x-2">
@@ -127,11 +143,53 @@
     let searchTimeout = null;
 
     document.addEventListener("DOMContentLoaded", () => {
-        const dashboardActive = document.querySelector("#nav-history");
-        if (dashboardActive) dashboardActive.classList.add("active");
+        const historyActive = document.querySelector("#nav-history");
+        if (historyActive) historyActive.classList.add("active");
         
+        loadDailySummary();
         loadLogsTable(0);
     });
+
+    async function loadDailySummary() {
+        const container = document.getElementById("daily-summary-cards");
+        if (!container) return;
+        
+        try {
+            const res = await fetch('/api/daily_summary');
+            const data = await res.json();
+            
+            if (data.status === 'success' && data.daily_summary && data.daily_summary.length > 0) {
+                container.innerHTML = "";
+                data.daily_summary.forEach((day, idx) => {
+                    const isToday = idx === 0;
+                    const card = document.createElement("div");
+                    card.className = `glass-card p-3.5 text-center space-y-1 ${isToday ? 'border-[var(--accent-cyan)]/40 glow-cyan' : ''}`;
+                    card.innerHTML = `
+                        <div class="text-[10px] ${isToday ? 'text-[var(--accent-cyan)] font-bold' : 'text-theme-muted'} font-mono uppercase truncate">
+                            ${isToday ? 'TODAY (' + day.date + ')' : day.date}
+                        </div>
+                        <div class="text-base font-black font-mono text-amber-400">
+                            ${day.total_duration_str}
+                        </div>
+                        <div class="text-[10px] text-theme-muted font-mono flex items-center justify-center space-x-1.5">
+                            <span>${day.total_runs} Run${day.total_runs > 1 ? 's' : ''}</span>
+                            <span>•</span>
+                            <span class="text-emerald-400 font-semibold">${day.total_energy_kwh.toFixed(3)} kWh</span>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } else {
+                container.innerHTML = `
+                    <div class="col-span-full py-3 text-center text-xs text-theme-muted font-mono">
+                        No daily sessions logged yet.
+                    </div>
+                `;
+            }
+        } catch (e) {
+            console.error("Error loading daily summary:", e);
+        }
+    }
 
     function triggerHistorySearch() {
         clearTimeout(searchTimeout);
@@ -170,21 +228,25 @@
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-[var(--table-row-hover)] transition-colors group";
                 
-                const statusClass = r.pump_status === 1 ? 'text-emerald-400 font-bold' : 'text-theme-muted';
-                const statusText = r.pump_status === 1 ? 'ACTIVE' : 'STANDBY';
+                const isRunning = r.status === 'ACTIVE';
+                const statusBadge = isRunning 
+                    ? '<span class="text-emerald-400 font-bold text-[10px] tracking-wider sub-card px-2.5 py-0.5 rounded-md font-mono animate-pulse border border-emerald-500/30">RUNNING NOW</span>'
+                    : '<span class="text-theme-muted text-[10px] tracking-wider sub-card px-2.5 py-0.5 rounded-md font-mono">COMPLETED</span>';
                 
+                const stopTime = isRunning ? '<span class="text-emerald-400 font-bold">Active...</span>' : r.end_time;
+                const durDisplay = r.duration_str || (r.duration_minutes ? `${r.duration_minutes.toFixed(1)} mins` : '1s');
+
                 tr.innerHTML = `
                     <td class="py-3 px-6 text-theme-muted">#${r.id}</td>
                     <td class="py-3 px-6 font-semibold text-theme-primary">${r.date}</td>
-                    <td class="py-3 px-6 text-theme-secondary">${r.time}</td>
-                    <td class="py-3 px-6 text-right text-blue-400 font-bold">${r.voltage.toFixed(1)}V</td>
-                    <td class="py-3 px-6 text-right text-cyan-400 font-semibold">${r.current.toFixed(2)}A</td>
-                    <td class="py-3 px-6 text-right text-purple-400 font-semibold">${r.power.toFixed(1)}W</td>
-                    <td class="py-3 px-6 text-center"><span class="${statusClass} text-[10px] tracking-wider sub-card px-2.5 py-0.5 rounded-md font-mono">${statusText}</span></td>
-                    <td class="py-3 px-6 text-right text-amber-500 font-semibold">${r.runtime.toFixed(2)} hr</td>
-                    <td class="py-3 px-6 text-right text-emerald-400 font-semibold">${r.energy.toFixed(4)} kWh</td>
+                    <td class="py-3 px-6 text-emerald-400 font-bold">${r.start_time}</td>
+                    <td class="py-3 px-6 text-theme-secondary">${stopTime}</td>
+                    <td class="py-3 px-6 text-right text-amber-400 font-black text-sm">${durDisplay}</td>
+                    <td class="py-3 px-6 text-right text-purple-400 font-semibold">${r.avg_power ? r.avg_power.toFixed(1) + 'W' : '0.0W'}</td>
+                    <td class="py-3 px-6 text-right text-emerald-400 font-semibold">${r.energy_kwh ? r.energy_kwh.toFixed(4) + ' kWh' : '0.0000 kWh'}</td>
+                    <td class="py-3 px-6 text-center">${statusBadge}</td>
                     <td class="py-3 px-6 text-center">
-                        <button onclick="deleteRecordItem(${r.id})" class="p-1.5 rounded-lg bg-red-950/20 border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white transition-all text-[11px]" title="Delete Record">
+                        <button onclick="deleteRecordItem(${r.id})" class="p-1.5 rounded-lg bg-red-950/20 border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white transition-all text-[11px]" title="Delete Session">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </td>
@@ -192,7 +254,7 @@
                 tableBody.appendChild(tr);
             });
             
-            updatePaginationControls(data.total, offset, data.records.length);
+            updatePaginationControls(data.total_count || data.total, offset, data.records.length);
             
         } catch (e) {
             console.error("Error loading history logs:", e);
@@ -219,13 +281,14 @@
     }
 
     async function deleteRecordItem(id) {
-        if (!confirm(`Delete telemetry entry #${id} permanently?`)) return;
+        if (!confirm(`Delete operation record #${id} permanently?`)) return;
         
         try {
             const res = await fetch(`/api/history/${id}`, { method: 'DELETE' });
             const data = await res.json();
-            if (data.success) {
-                if (window.showToast) window.showToast("success", `Record #${id} successfully purged from DB.`);
+            if (data.status === 'success' || data.success) {
+                if (window.showToast) window.showToast("success", `Session record #${id} purged.`);
+                loadDailySummary();
                 loadLogsTable(currentOffset);
             } else {
                 alert("Purge failed: " + data.message);
@@ -253,7 +316,7 @@
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `solar_sync_logs_${new Date().toISOString().slice(0,10)}.csv`);
+        link.setAttribute("download", `solar_pump_operations_${new Date().toISOString().slice(0,10)}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -271,7 +334,7 @@
         const url = 'data:application/vnd.ms-excel,' + encodeURIComponent(html);
         const link = document.createElement("a");
         link.setAttribute("href", url);
-        link.setAttribute("download", `solar_sync_analytics_${new Date().toISOString().slice(0,10)}.xls`);
+        link.setAttribute("download", `solar_pump_operations_${new Date().toISOString().slice(0,10)}.xls`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
