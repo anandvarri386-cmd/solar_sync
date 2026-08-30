@@ -152,8 +152,49 @@ document.addEventListener("click", (e) => {
 /* ==========================================================================
    SocketIO Connection manager
    ========================================================================== */
+function updateGlobalESP32Status(isOnline) {
+    const tag = document.getElementById("esp32-status-tag");
+    if (!tag) return;
+    
+    if (isOnline) {
+        tag.className = "flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-950/30 border border-emerald-500/20 text-emerald-400 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors duration-300";
+        tag.innerHTML = `
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span>ESP32 ONLINE</span>
+        `;
+    } else {
+        tag.className = "flex items-center space-x-1.5 px-3 py-1.5 bg-red-950/30 border border-red-500/20 text-red-400 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors duration-300";
+        tag.innerHTML = `
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+            </span>
+            <span>ESP32 OFFLINE</span>
+        `;
+    }
+}
+window.updateGlobalESP32Status = updateGlobalESP32Status;
+
+async function checkInitialESP32Status() {
+    try {
+        const res = await fetch('/api/live');
+        if (res.ok) {
+            const data = await res.json();
+            updateGlobalESP32Status(data.esp32_online);
+        }
+    } catch (err) {
+        console.warn("Could not fetch live status:", err);
+    }
+}
+
 function initSocket() {
     const indicator = document.getElementById("socket-status-indicator");
+    
+    // Check initial online status immediately on page load
+    checkInitialESP32Status();
     
     // Connect to same host & port serving Flask app
     socket = io();
@@ -164,7 +205,7 @@ function initSocket() {
             indicator.className = "w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-[var(--sidebar-bg)] glow-green animate-pulse";
             indicator.title = "Connected to Dashboard Gateway Server";
         }
-        showToast("success", "Active Socket.IO dashboard link established.");
+        checkInitialESP32Status();
     });
     
     socket.on('disconnect', () => {
@@ -173,7 +214,11 @@ function initSocket() {
             indicator.className = "w-3.5 h-3.5 rounded-full bg-red-500 border-2 border-[var(--sidebar-bg)] glow-red animate-pulse";
             indicator.title = "Disconnected from Dashboard Gateway Server";
         }
-        showToast("error", "Dashboard socket connection severed.");
+    });
+    
+    // Global telemetry broadcast listener (updates header ESP32 status on ALL pages)
+    socket.on('telemetry', (data) => {
+        updateGlobalESP32Status(data.esp32_online);
     });
     
     socket.on('toast', (data) => {

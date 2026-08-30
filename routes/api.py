@@ -44,7 +44,7 @@ def get_live_data():
     is_online = False
     if last_pull is not None:
         delta = (datetime.now() - last_pull).total_seconds()
-        is_online = delta < 5.0
+        is_online = delta < 12.0
         
     target_status = DEVICE_TARGET_STATES.get(device_id, 0)
     
