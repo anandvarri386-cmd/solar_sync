@@ -1,31 +1,33 @@
 {
-  "name": "SolarSync - Smart Solar Pump Controller",
+  "id": "com.solarsync.pumpcontroller",
+  "name": "SolarSync Pump Controller",
   "short_name": "SolarSync",
   "description": "Smart IoT Remote Monitoring and Control Platform for DC Solar Water Pumps",
-  "start_url": "/dashboard",
+  "start_url": "/login",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#040714",
   "theme_color": "#040714",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2300f5ff'/%3E%3Cstop offset='100%25' stop-color='%2338bdf8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='128' fill='%23070b1e'/%3E%3Cpath fill='url(%23g)' d='M256 64a192 192 0 1 0 192 192A192 192 0 0 0 256 64zm0 320a128 128 0 1 1 128-128 128 128 0 0 1-128 128zm-24-216v80h-80a8 8 0 0 0 0 16h80v80a8 8 0 0 0 16 0v-80h80a8 8 0 0 0 0-16h-80v-80a8 8 0 0 0-16 0z'/%3E%3C/svg%3E",
-      "sizes": "192x192 512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
-  ],
-  "categories": ["utilities", "productivity", "iot"],
-  "shortcuts": [
-    {
-      "name": "Live Dashboard",
-      "url": "/dashboard",
-      "description": "View live solar telemetry and control pump"
+      "src": "/static/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "name": "Historical Logs",
-      "url": "/history",
-      "description": "View database telemetry logs"
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
-  ]
+  ],
+  "categories": ["utilities", "productivity", "business"]
 }
