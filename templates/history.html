@@ -27,8 +27,8 @@
         </div>
     </section>
 
-    <!-- Daily Total Runtime Breakdown Cards -->
-    <section class="space-y-3">
+    <!-- Daily Total Runtime Breakdown Cards (Only displayed when real history exists) -->
+    <section id="section-daily-summary" class="space-y-3 hidden">
         <div class="flex items-center justify-between px-1">
             <h3 class="text-xs font-bold text-[var(--accent-cyan)] font-mono uppercase tracking-wider flex items-center space-x-2">
                 <i class="fa-solid fa-calendar-day"></i>
@@ -39,10 +39,6 @@
 
         <div id="daily-summary-cards" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
             <!-- Loaded dynamically via loadDailySummary() -->
-            <div class="glass-card p-4 text-center space-y-1">
-                <div class="text-[10px] text-theme-muted font-mono uppercase">Loading...</div>
-                <div class="h-6 sub-card shimmer rounded-md"></div>
-            </div>
         </div>
     </section>
 
@@ -101,12 +97,14 @@
         
         <!-- Table Empty State -->
         <div id="table-empty-state" class="py-16 text-center space-y-4 hidden">
-            <div class="w-16 h-16 rounded-full sub-card flex items-center justify-center mx-auto text-[var(--accent-cyan)] text-xl">
-                <i class="fa-solid fa-hourglass-empty"></i>
+            <div class="w-16 h-16 rounded-full sub-card flex items-center justify-center mx-auto text-[var(--accent-cyan)] text-2xl">
+                <i class="fa-solid fa-clock-rotate-left"></i>
             </div>
             <div class="space-y-1">
-                <h4 class="text-sm font-bold text-theme-primary uppercase tracking-wider font-mono">No pump run history yet</h4>
-                <p class="text-xs text-theme-muted max-w-xs mx-auto">When your solar pump is switched ON, every run event and duration will be logged here.</p>
+                <h4 class="text-base font-bold text-theme-primary font-mono">No History Recorded Yet</h4>
+                <p class="text-xs text-theme-secondary max-w-sm mx-auto">
+                    When your solar pump is switched ON, every real-time run event, start time, stop time, and daily total duration will be logged here.
+                </p>
             </div>
         </div>
 
@@ -151,14 +149,16 @@
     });
 
     async function loadDailySummary() {
+        const section = document.getElementById("section-daily-summary");
         const container = document.getElementById("daily-summary-cards");
-        if (!container) return;
+        if (!container || !section) return;
         
         try {
             const res = await fetch('/api/daily_summary');
             const data = await res.json();
             
             if (data.status === 'success' && data.daily_summary && data.daily_summary.length > 0) {
+                section.classList.remove("hidden");
                 container.innerHTML = "";
                 data.daily_summary.forEach((day, idx) => {
                     const isToday = idx === 0;
@@ -180,14 +180,11 @@
                     container.appendChild(card);
                 });
             } else {
-                container.innerHTML = `
-                    <div class="col-span-full py-3 text-center text-xs text-theme-muted font-mono">
-                        No daily sessions logged yet.
-                    </div>
-                `;
+                section.classList.add("hidden");
             }
         } catch (e) {
             console.error("Error loading daily summary:", e);
+            section.classList.add("hidden");
         }
     }
 
