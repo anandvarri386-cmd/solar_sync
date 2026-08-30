@@ -16,6 +16,26 @@ def format_duration(total_seconds):
     else:
         return f"{seconds}s"
 
+def get_latest_reading(pump_device_id="PUMP-SOLAR-1001"):
+    """Fetches the latest reading or session for a specific customer's pump device."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute('SELECT * FROM pump_sessions WHERE pump_device_id = ? ORDER BY id DESC LIMIT 1', (pump_device_id,))
+        row = cursor.fetchone()
+        if row:
+            return dict(row)
+        return None
+    except Exception as e:
+        print(f"Database Error getting latest reading for {pump_device_id}: {e}")
+        return None
+    finally:
+        conn.close()
+
+def insert_reading(voltage, current, power, status, runtime, energy, pump_device_id="PUMP-SOLAR-1001"):
+    """Wrapper that records telemetry and updates pump session."""
+    return record_telemetry_and_session(voltage, current, power, status, runtime, energy, pump_device_id)
+
 def record_telemetry_and_session(voltage, current, power, pump_status, runtime, energy, pump_device_id="PUMP-SOLAR-1001"):
     """
     Updates active motor run sessions and logs telemetry.
