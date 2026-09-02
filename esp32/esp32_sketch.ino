@@ -1,17 +1,25 @@
 /*
- * SolarSync AI - Commercial ESP32 IoT Node Controller (Cloud Edition)
+ * SolarSync - Commercial ESP32 IoT Node Controller (Cloud Edition)
  * 
  * Hardware Wiring Map:
  * - Voltage Sensor (0-25V Divider): Signal Pin -> GPIO 35 (ADC1_CH7)
  * - ACS712 Current Sensor (20A Mod): Signal Pin -> GPIO 34 (ADC1_CH6)
  * - 5V SPDT Relay Control Module: Signal Pin -> GPIO 26
  * - DC Water Pump: Connected in-line with Relay COM/NO contacts.
+ * 
+ * DC Supply & Wi-Fi Stability Enhancements:
+ * - Hardware Brownout Detector disabled (prevents resets on cold DC boot)
+ * - Wi-Fi RF Power optimized to 15dBm to eliminate current spikes
  */
 
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
+
+// Low-level hardware registers for power stability
+#include "soc/soc.h"
+#include "soc/rtc_cntl_reg.h"
 
 // 1. Wi-Fi Credentials (make sure phone hotspot band is 2.4 GHz)
 const char* ssid = "realme P1 5G";
@@ -48,10 +56,16 @@ double voltageCalibrationFactor = 1.0;
 double currentSensorOffset = 0.0;
 
 void setup() {
+  // 1. Disable hardware brownout detector to prevent restart during Wi-Fi surge on DC supply
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
+
   Serial.begin(115200);
   delay(1000);
   
-  Serial.println("\n--- SolarSync AI Cloud IoT Node Initializing ---");
+  Serial.println("\n==============================================");
+  Serial.println("  SolarSync Commercial ESP32 IoT Node");
+  Serial.println("  Hardware Power Optimization: ENABLED");
+  Serial.println("==============================================");
   Serial.print("Device ID: ");
   Serial.println(deviceId);
   
@@ -68,16 +82,19 @@ void setup() {
   
   // Clean Wi-Fi state & set station mode
   WiFi.disconnect(true);
-  delay(100);
+  delay(150);
   WiFi.mode(WIFI_STA);
+
+  // 2. Reduce Wi-Fi TX Power to 15dBm (prevents severe voltage drop on VIN pin while maintaining strong connection)
+  WiFi.setTxPower(WIFI_POWER_15dBm);
   
   Serial.print("Connecting to Wi-Fi hotspot: ");
   Serial.println(ssid);
   WiFi.begin(ssid, password);
   
   int attempts = 0;
-  while (WiFi.status() != WL_CONNECTED && attempts < 40) {
-    delay(500);
+  while (WiFi.status() != WL_CONNECTED && attempts < 50) {
+    delay(400);
     Serial.print(".");
     attempts++;
   }
@@ -90,9 +107,9 @@ void setup() {
     Serial.println(serverUrl);
   } else {
     Serial.println("\n[ERROR] Could not connect to Wi-Fi hotspot.");
-    Serial.println("-> Please check: 1) Phone Hotspot band MUST be 2.4 GHz.");
-    Serial.println("-> Please check: 2) Hotspot Security is WPA2-Personal.");
-    Serial.println("-> Please check: 3) Password 'Anand123' and SSID 'realme P1 5G' match exactly.");
+    Serial.println("-> Check: 1) Phone Hotspot band MUST be 2.4 GHz.");
+    Serial.println("-> Check: 2) Supply voltage on VIN pin is at least 5.0V (not 3.3V).");
+    Serial.println("-> Check: 3) Add a 100uF - 470uF capacitor across VIN and GND.");
   }
 }
 
@@ -118,7 +135,7 @@ void calibrateCurrentSensor() {
 void loop() {
   // If disconnected, attempt auto-reconnect
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("Reconnecting to Wi-Fi...");
+    Serial.println("Wi-Fi disconnected. Reconnecting...");
     WiFi.reconnect();
     delay(3000);
     return;
