@@ -216,8 +216,16 @@ def receive_esp32_telemetry():
     calibrated_voltage = round(raw_voltage * v_mult, 2)
     calibrated_current = round(max(0.0, raw_current + c_off), 2)
     
-    # When current is >= 1.0 Amp or explicitly turned ON, pump is RUNNING (status = 1)
-    if calibrated_current >= 1.0 or pump_status == 1:
+    target_state = DEVICE_TARGET_STATES.get(device_id, 0)
+    
+    # Noise deadband filter: Clamp idle drift when relay is OFF
+    if target_state == 0 and calibrated_current < 0.80:
+        calibrated_current = 0.0
+    elif calibrated_current < 0.35:
+        calibrated_current = 0.0
+        
+    # Pump status is RUNNING if relay target is ON or sustained current >= 1.0A
+    if target_state == 1 or pump_status == 1 or calibrated_current >= 1.0:
         pump_status = 1
     else:
         pump_status = 0

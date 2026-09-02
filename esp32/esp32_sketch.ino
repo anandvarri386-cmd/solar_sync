@@ -191,22 +191,31 @@ double readVoltage() {
 }
 
 double readCurrent() {
-  // 50 samples averaging for clean ACS712 reading
+  // 100 samples multi-sampling for clean ACS712 reading
   long sumADC = 0;
-  for (int i = 0; i < 50; i++) {
+  for (int i = 0; i < 100; i++) {
     sumADC += analogRead(CURRENT_PIN);
-    delayMicroseconds(150);
+    delayMicroseconds(100);
   }
-  double avgADC = sumADC / 50.0;
+  double avgADC = sumADC / 100.0;
   double sensorVolts = (avgADC / 4095.0) * 3.3;
   
+  // Dynamic Zero-Current Drift Auto-Tracking when Relay is OFF
+  // Automatically compensates for power supply ripple & Wi-Fi voltage drops
+  if (targetStatus == 0) {
+    if (abs(sensorVolts - zeroCurrentVoltage) < 0.25) {
+      zeroCurrentVoltage = (zeroCurrentVoltage * 0.90) + (sensorVolts * 0.10);
+    }
+  }
+  
   // ACS712-20A sensitivity: 100mV/A (0.100V per Ampere)
-  // Use abs() to handle any wire polarity in the ACS712 screw terminals
   double voltageDiff = abs(sensorVolts - zeroCurrentVoltage);
   double measuredCurrent = (voltageDiff / 0.100) + currentSensorOffset;
   
-  // Filter out tiny noise jitter
-  if (measuredCurrent < 0.10) {
+  // Clean Deadband Noise Filter:
+  // When relay is OFF, clamp any drift under 0.8A to 0.00A
+  // When relay is ON, filter out sub-0.35A idle ripple
+  if (measuredCurrent < 0.35 || (targetStatus == 0 && measuredCurrent < 0.80)) {
     measuredCurrent = 0.0;
   }
   return measuredCurrent;
