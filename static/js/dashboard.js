@@ -3,6 +3,7 @@
 // Local State variables
 let isSimulating = false;
 let simulationInterval = null;
+let isHardwareOnline = false;
 
 // Cumulative simulation logs
 let simRuntime = 0.0;
@@ -16,6 +17,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     initSocketListeners();
     initKeyboardShortcuts();
+    
+    // Check initial online status
+    fetch('/api/live')
+        .then(r => r.json())
+        .then(d => {
+            isHardwareOnline = !!d.esp32_online;
+            updateDashboardWidgets(d);
+        })
+        .catch(err => console.log(err));
 });
 
 /* Bind SocketIO telemetries */
@@ -29,8 +39,8 @@ function initSocketListeners() {
 
     // Handle initial state sync
     socket.on('status_update', (data) => {
-        console.log("Sync status received:", data);
-        updatePumpControlsUI(data.target_status);
+        isHardwareOnline = !!data.esp32_online;
+        updatePumpControlsUI(data.target_status, isHardwareOnline);
         if (data.latest_telemetry && data.latest_telemetry.last_updated) {
             updateDashboardWidgets(data.latest_telemetry);
         }
@@ -38,22 +48,28 @@ function initSocketListeners() {
 
     // Handle incoming telemetry broadcasts
     socket.on('telemetry', (data) => {
+        isHardwareOnline = !!data.esp32_online;
         updateDashboardWidgets(data);
     });
 
     // Handle direct commands update
     socket.on('pump_command', (data) => {
-        updatePumpControlsUI(data.target_status);
+        if (data.esp32_online !== undefined) isHardwareOnline = !!data.esp32_online;
+        updatePumpControlsUI(data.target_status, isHardwareOnline);
     });
 }
 
 /* Update dashboard statistics cards & widgets */
 function updateDashboardWidgets(data) {
+    if (data.esp32_online !== undefined) {
+        isHardwareOnline = !!data.esp32_online;
+    }
+    
     // 1. ESP32 online tag in header & matrix
     const tag = document.getElementById("esp32-status-tag");
     const tagLive = document.getElementById("live-esp32");
     if (tag) {
-        if (data.esp32_online) {
+        if (isHardwareOnline) {
             tag.className = "flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-950/30 border border-emerald-500/20 text-emerald-400 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors";
             tag.innerHTML = `
                 <span class="relative flex h-2 w-2">
@@ -74,21 +90,21 @@ function updateDashboardWidgets(data) {
         }
     }
     if (tagLive) {
-        tagLive.textContent = data.esp32_online ? "ONLINE" : "OFFLINE";
-        tagLive.className = data.esp32_online ? "text-xl font-bold font-mono mt-1 text-emerald-400" : "text-xl font-bold font-mono mt-1 text-red-500";
+        tagLive.textContent = isHardwareOnline ? "ONLINE" : "OFFLINE";
+        tagLive.className = isHardwareOnline ? "text-xl font-bold font-mono mt-1 text-emerald-400" : "text-xl font-bold font-mono mt-1 text-red-500";
     }
 
     // 2. Animate Main Stat Card values (Current, Voltage, Power, Duration, Energy)
-    animateNumericValue("val-current", data.current, 2);
-    animateNumericValue("val-voltage", data.voltage, 1);
-    animateNumericValue("val-power", data.power, 1);
-    animateNumericValue("val-runtime", data.runtime, 2);
-    animateNumericValue("val-energy", data.energy, 4);
+    animateNumericValue("val-current", data.current || 0.0, 2);
+    animateNumericValue("val-voltage", data.voltage || 0.0, 1);
+    animateNumericValue("val-power", data.power || 0.0, 1);
+    animateNumericValue("val-runtime", data.runtime || 0.0, 2);
+    animateNumericValue("val-energy", data.energy || 0.0, 4);
 
     // Update gauge bars inside cards
-    updateProgressBarWidth("bar-current", data.current, 4.0); // max 4.0A
-    updateProgressBarWidth("bar-voltage", data.voltage, 24.0); // max 24.0V
-    updateProgressBarWidth("bar-power", data.power, 80.0); // max 80.0W
+    updateProgressBarWidth("bar-current", data.current || 0.0, 4.0); // max 4.0A
+    updateProgressBarWidth("bar-voltage", data.voltage || 0.0, 24.0); // max 24.0V
+    updateProgressBarWidth("bar-power", data.power || 0.0, 80.0); // max 80.0W
 
     // 3. Update Detailed Matrix Section
     const liveCurr = document.getElementById("live-current");
@@ -97,24 +113,24 @@ function updateDashboardWidgets(data) {
     const liveStatus = document.getElementById("live-status");
     const liveTime = document.getElementById("txt-last-update-time");
 
-    if (liveCurr) liveCurr.textContent = data.current.toFixed(2);
-    if (liveVolt) liveVolt.textContent = data.voltage.toFixed(1);
-    if (livePow) livePow.textContent = data.power.toFixed(1);
+    if (liveCurr) liveCurr.textContent = (data.current || 0.0).toFixed(2);
+    if (liveVolt) liveVolt.textContent = (data.voltage || 0.0).toFixed(1);
+    if (livePow) livePow.textContent = (data.power || 0.0).toFixed(1);
     if (liveTime && data.last_updated) liveTime.textContent = `Last update: ${data.last_updated}`;
     
-    const isRunning = (data.current >= 1.0 || data.pump_status === 1) ? 1 : 0;
+    const isRunning = (isHardwareOnline && ((data.current || 0) >= 1.0 || data.pump_status === 1)) ? 1 : 0;
     
     if (liveStatus) {
-        liveStatus.textContent = isRunning === 1 ? "ACTIVE RUN" : "STANDBY";
-        liveStatus.className = isRunning === 1 ? "text-xl font-bold font-mono mt-1 text-emerald-400 animate-pulse" : "text-xl font-bold font-mono mt-1 text-theme-muted";
+        liveStatus.textContent = !isHardwareOnline ? "OFFLINE" : (isRunning === 1 ? "ACTIVE RUN" : "STANDBY");
+        liveStatus.className = !isHardwareOnline ? "text-xl font-bold font-mono mt-1 text-red-500" : (isRunning === 1 ? "text-xl font-bold font-mono mt-1 text-emerald-400 animate-pulse" : "text-xl font-bold font-mono mt-1 text-theme-muted");
     }
 
-    // Sync card status badge and relay state
-    updatePumpControlsUI(isRunning);
+    // Sync card status badge and relay state with online context
+    updatePumpControlsUI(isRunning, isHardwareOnline);
 
     // 4. Push data points to charts
     if (window.appendChartData) {
-        window.appendChartData(data.voltage, data.current, data.power);
+        window.appendChartData(data.voltage || 0, data.current || 0, data.power || 0);
     }
 }
 
@@ -148,7 +164,7 @@ function updateProgressBarWidth(elementId, val, maxVal) {
 }
 
 /* Update Pump Controls UI & Active States */
-function updatePumpControlsUI(targetStatus) {
+function updatePumpControlsUI(targetStatus, isOnline = isHardwareOnline) {
     const cmdVal = document.getElementById("target-cmd-val");
     const cardStatus = document.getElementById("card-status");
     const statusTxt = document.getElementById("status-text-val");
@@ -157,6 +173,27 @@ function updatePumpControlsUI(targetStatus) {
     const statusRipple = document.getElementById("status-ripple");
     const btnOn = document.getElementById("btn-pump-on");
     const btnOff = document.getElementById("btn-pump-off");
+    
+    if (!isOnline) {
+        // Hardware is OFFLINE
+        if (cmdVal) {
+            cmdVal.textContent = "ESP32 OFFLINE (NO CONNECTION)";
+            cmdVal.className = "font-bold text-red-400 font-mono";
+        }
+        if (cardStatus) cardStatus.className = "glass-card p-4 relative overflow-hidden border-red-500/30";
+        if (statusTxt) {
+            statusTxt.textContent = "ESP32 OFFLINE";
+            statusTxt.className = "text-2xl font-black font-mono tracking-wide text-red-500";
+        }
+        if (statusSub) statusSub.textContent = "Hardware Disconnected";
+        if (statusDot) statusDot.className = "w-2.5 h-2.5 rounded-full bg-red-500 glow-red animate-pulse";
+        if (statusRipple) statusRipple.style.opacity = "0";
+        
+        // Default button states
+        if (btnOn) btnOn.className = "h-24 bg-emerald-950/20 border-2 border-emerald-500/20 text-emerald-400/50 font-bold rounded-2xl flex items-center justify-center space-x-4 transition-all duration-300 btn-ripple opacity-60 cursor-not-allowed";
+        if (btnOff) btnOff.className = "h-24 sub-card border-2 border-white/5 text-theme-muted font-bold rounded-2xl flex items-center justify-center space-x-4 transition-all duration-300 btn-ripple opacity-60";
+        return;
+    }
     
     if (targetStatus === 1) {
         if (cmdVal) {
@@ -173,8 +210,8 @@ function updatePumpControlsUI(targetStatus) {
         if (statusRipple) statusRipple.style.opacity = "1";
         
         // Highlight active button
-        if (btnOn) btnOn.className = "h-20 bg-emerald-600 border-2 border-emerald-400 text-white font-bold rounded-2xl flex flex-col items-center justify-center space-y-1.5 transition-all duration-300 btn-ripple shadow-lg shadow-emerald-900/40 glow-green";
-        if (btnOff) btnOff.className = "h-20 sub-card border border-white/5 hover:border-red-500/40 text-theme-secondary hover:text-red-400 font-bold rounded-2xl flex flex-col items-center justify-center space-y-1.5 transition-all duration-300 btn-ripple opacity-80 hover:opacity-100";
+        if (btnOn) btnOn.className = "h-24 bg-emerald-950/30 border-2 border-emerald-500/40 hover:border-emerald-400 text-emerald-400 font-bold rounded-2xl flex items-center justify-center space-x-4 transition-all duration-300 btn-ripple shadow-lg hover:scale-[1.01] active:scale-[0.99] glow-green";
+        if (btnOff) btnOff.className = "h-24 sub-card border-2 border-white/10 hover:border-red-500/40 text-theme-secondary hover:text-red-400 font-bold rounded-2xl flex items-center justify-center space-x-4 transition-all duration-300 btn-ripple opacity-80 hover:opacity-100";
     } else {
         if (cmdVal) {
             cmdVal.textContent = "PUMP STOPPED (OFF)";
@@ -190,13 +227,19 @@ function updatePumpControlsUI(targetStatus) {
         if (statusRipple) statusRipple.style.opacity = "0";
         
         // Highlight active button
-        if (btnOn) btnOn.className = "h-20 bg-emerald-950/30 border border-emerald-500/30 hover:border-emerald-400 text-emerald-400 font-bold rounded-2xl flex flex-col items-center justify-center space-y-1.5 transition-all duration-300 btn-ripple opacity-80 hover:opacity-100";
-        if (btnOff) btnOff.className = "h-20 bg-red-600 border-2 border-red-400 text-white font-bold rounded-2xl flex flex-col items-center justify-center space-y-1.5 transition-all duration-300 btn-ripple shadow-lg shadow-red-900/40 glow-red";
+        if (btnOn) btnOn.className = "h-24 bg-emerald-950/30 border-2 border-emerald-500/40 hover:border-emerald-400 text-emerald-400 font-bold rounded-2xl flex items-center justify-center space-x-4 transition-all duration-300 btn-ripple opacity-80 hover:opacity-100";
+        if (btnOff) btnOff.className = "h-24 sub-card border-2 border-red-500/40 text-red-400 font-bold rounded-2xl flex items-center justify-center space-x-4 transition-all duration-300 btn-ripple shadow-lg";
     }
 }
 
-/* Instant Direct Control command request (NO restrictions, NO blocking modals) */
+/* Instant Direct Control command request with Hardware Online Validation */
 function requestPumpState(state) {
+    if (state === 1 && !isHardwareOnline) {
+        showToast("error", "⚠️ Cannot Turn ON: ESP32 Hardware is OFFLINE. Please check power and Wi-Fi.");
+        updatePumpControlsUI(0, false);
+        return;
+    }
+    
     sendPumpStateCommand(state);
     const actionText = state === 1 ? "START (ON)" : "STOP (OFF)";
     showToast(state === 1 ? "success" : "info", `Relay command sent: ${actionText}`);
@@ -212,9 +255,17 @@ function sendPumpStateCommand(state) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ target_status: state, pump_status: state })
-    }).catch(err => console.log(err));
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'error') {
+            showToast("error", data.message);
+            updatePumpControlsUI(0, false);
+        }
+    })
+    .catch(err => console.log(err));
     
-    updatePumpControlsUI(state);
+    updatePumpControlsUI(state, isHardwareOnline);
 }
 
 /* Emergency Stop Command */

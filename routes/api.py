@@ -103,41 +103,90 @@ def get_daily_runtime_summary():
 
 @api_bp.route('/api/pump/state', methods=['GET', 'POST'])
 def handle_pump_state_route():
-    """Endpoint for web dashboard and mobile to toggle pump state (ON/OFF) and register session."""
-    global DEVICE_TARGET_STATES, DEVICE_LAST_TELEMETRY
+    """Endpoint for web dashboard and mobile to toggle pump state (ON/OFF) with offline validation."""
+    global DEVICE_TARGET_STATES, DEVICE_LAST_TELEMETRY, DEVICE_LAST_PULL
     device_id = get_session_device_id()
     
+    # Validate if ESP32 has sent heartbeat in last 12 seconds
+    last_pull = DEVICE_LAST_PULL.get(device_id)
+    is_online = False
+    if last_pull is not None:
+        delta = (datetime.now() - last_pull).total_seconds()
+        is_online = delta < 12.0
+        
     if request.method == 'GET':
-        return jsonify({"status": "success", "pump_device_id": device_id, "target_status": DEVICE_TARGET_STATES.get(device_id, 0)})
+        return jsonify({
+            "status": "success", 
+            "pump_device_id": device_id, 
+            "target_status": DEVICE_TARGET_STATES.get(device_id, 0),
+            "esp32_online": is_online
+        })
         
     data = request.get_json(silent=True) or {}
     target = int(data.get('target_status', data.get('pump_status', 0)))
     device_id = data.get('pump_device_id') or device_id
     
+    # Reject command if ESP32 is offline!
+    if target == 1 and not is_online:
+        socketio = get_socketio()
+        if socketio:
+            socketio.emit('toast', {
+                "type": "error",
+                "message": "ESP32 node is OFFLINE. Cannot turn pump ON while disconnected."
+            })
+            socketio.emit('pump_command', {
+                "pump_device_id": device_id,
+                "target_status": 0,
+                "esp32_online": False
+            })
+        return jsonify({
+            "status": "error",
+            "message": "ESP32 hardware is OFFLINE. Please check ESP32 power and Wi-Fi.",
+            "esp32_online": False,
+            "target_status": 0
+        }), 400
+        
     DEVICE_TARGET_STATES[device_id] = target
     
-    # Grab latest voltage/power or defaults
-    last = DEVICE_LAST_TELEMETRY.get(device_id, {})
-    v = last.get('voltage', 18.0) if target == 1 else 0.0
-    i = last.get('current', 2.2) if target == 1 else 0.0
-    p = last.get('power', round(v * i, 1)) if target == 1 else 0.0
-    
-    # Record session event immediately
-    record_telemetry_and_session(
-        voltage=v,
-        current=i,
-        power=p,
-        pump_status=target,
-        runtime=0.0,
-        energy=0.0,
-        pump_device_id=device_id
-    )
+    if target == 1:
+        last = DEVICE_LAST_TELEMETRY.get(device_id, {})
+        v = last.get('voltage', 18.0)
+        i = last.get('current', 2.2)
+        p = last.get('power', round(v * i, 1))
+        record_telemetry_and_session(
+            voltage=v,
+            current=i,
+            power=p,
+            pump_status=1,
+            runtime=0.0,
+            energy=0.0,
+            pump_device_id=device_id
+        )
+    else:
+        record_telemetry_and_session(
+            voltage=0.0,
+            current=0.0,
+            power=0.0,
+            pump_status=0,
+            runtime=0.0,
+            energy=0.0,
+            pump_device_id=device_id
+        )
     
     socketio = get_socketio()
     if socketio:
-        socketio.emit('pump_command', {"pump_device_id": device_id, "target_status": target})
+        socketio.emit('pump_command', {
+            "pump_device_id": device_id, 
+            "target_status": target,
+            "esp32_online": is_online
+        })
         
-    return jsonify({"status": "success", "pump_device_id": device_id, "target_status": target})
+    return jsonify({
+        "status": "success", 
+        "pump_device_id": device_id, 
+        "target_status": target,
+        "esp32_online": is_online
+    })
 
 @api_bp.route('/api/settings', methods=['GET', 'POST'])
 def handle_settings():

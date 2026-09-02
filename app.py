@@ -60,32 +60,64 @@ def create_app():
     def handle_pump_control(data):
         """Receives controls commands from dashboard clients for a specific pump."""
         from models.pump_data import record_telemetry_and_session
+        from datetime import datetime
         device_id = data.get('pump_device_id') or session.get('pump_device_id', 'PUMP-SOLAR-1001')
         target = int(data.get('target_status', 0))
         print(f"SocketIO: Pump control request for {device_id} -> {target}")
         
+        # Check if hardware node is online
+        last_pull = DEVICE_LAST_PULL.get(device_id)
+        is_online = False
+        if last_pull is not None:
+            delta = (datetime.now() - last_pull).total_seconds()
+            is_online = delta < 12.0
+            
+        if target == 1 and not is_online:
+            socketio.emit('toast', {
+                "type": "error",
+                "message": "ESP32 node is OFFLINE. Cannot turn pump ON while hardware is disconnected."
+            })
+            socketio.emit('pump_command', {
+                "pump_device_id": device_id,
+                "target_status": 0,
+                "esp32_online": False
+            })
+            return
+            
         # Update target state globally in API dictionaries
         DEVICE_TARGET_STATES[device_id] = target
         
-        # Record session immediately in database
-        last = DEVICE_LAST_TELEMETRY.get(device_id, {})
-        v = last.get('voltage', 18.0) if target == 1 else 0.0
-        i = last.get('current', 2.2) if target == 1 else 0.0
-        p = last.get('power', round(v * i, 1)) if target == 1 else 0.0
-        record_telemetry_and_session(
-            voltage=v,
-            current=i,
-            power=p,
-            pump_status=target,
-            runtime=0.0,
-            energy=0.0,
-            pump_device_id=device_id
-        )
+        # Record session in database
+        if target == 1:
+            last = DEVICE_LAST_TELEMETRY.get(device_id, {})
+            v = last.get('voltage', 18.0)
+            i = last.get('current', 2.2)
+            p = last.get('power', round(v * i, 1))
+            record_telemetry_and_session(
+                voltage=v,
+                current=i,
+                power=p,
+                pump_status=1,
+                runtime=0.0,
+                energy=0.0,
+                pump_device_id=device_id
+            )
+        else:
+            record_telemetry_and_session(
+                voltage=0.0,
+                current=0.0,
+                power=0.0,
+                pump_status=0,
+                runtime=0.0,
+                energy=0.0,
+                pump_device_id=device_id
+            )
         
         # Broadcast the command to all listening clients
         socketio.emit('pump_command', {
             "pump_device_id": device_id,
-            "target_status": target
+            "target_status": target,
+            "esp32_online": is_online
         })
         
         status_text = "STARTED (ON)" if target == 1 else "STOPPED (OFF)"
