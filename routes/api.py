@@ -44,16 +44,31 @@ def get_live_data():
     is_online = False
     if last_pull is not None:
         delta = (datetime.now() - last_pull).total_seconds()
-        is_online = delta < 12.0
+        is_online = delta < 6.0  # 6 seconds threshold
         
     target_status = DEVICE_TARGET_STATES.get(device_id, 0)
     
-    response_data = {
-        **last_telemetry,
-        "pump_device_id": device_id,
-        "esp32_online": is_online,
-        "target_status": target_status
-    }
+    if not is_online:
+        # Zero out all ghost values when hardware is disconnected
+        response_data = {
+            "voltage": 0.0,
+            "current": 0.0,
+            "power": 0.0,
+            "pump_status": 0,
+            "runtime": last_telemetry.get("runtime", 0.0),
+            "energy": last_telemetry.get("energy", 0.0),
+            "last_updated": "Hardware Offline",
+            "pump_device_id": device_id,
+            "esp32_online": False,
+            "target_status": 0
+        }
+    else:
+        response_data = {
+            **last_telemetry,
+            "pump_device_id": device_id,
+            "esp32_online": True,
+            "target_status": target_status
+        }
     return jsonify(response_data)
 
 @api_bp.route('/api/history', methods=['GET'])

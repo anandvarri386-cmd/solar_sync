@@ -18,14 +18,21 @@ document.addEventListener("DOMContentLoaded", () => {
     initSocketListeners();
     initKeyboardShortcuts();
     
-    // Check initial online status
-    fetch('/api/live')
-        .then(r => r.json())
-        .then(d => {
-            isHardwareOnline = !!d.esp32_online;
-            updateDashboardWidgets(d);
-        })
-        .catch(err => console.log(err));
+    // Check initial online status & keep active 2s heartbeat polling
+    const syncLiveStatus = () => {
+        fetch('/api/live')
+            .then(r => r.json())
+            .then(d => {
+                isHardwareOnline = !!d.esp32_online;
+                updateDashboardWidgets(d);
+            })
+            .catch(err => {
+                isHardwareOnline = false;
+                updatePumpControlsUI(0, false);
+            });
+    };
+    syncLiveStatus();
+    setInterval(syncLiveStatus, 2000);
 });
 
 /* Bind SocketIO telemetries */

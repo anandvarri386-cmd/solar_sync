@@ -141,8 +141,8 @@ def get_history(limit=15, offset=0, search_query="", sort_by="id", sort_order="D
     if sort_order.upper() not in ["ASC", "DESC"]:
         sort_order = "DESC"
         
-    query = "SELECT * FROM pump_sessions WHERE pump_device_id = ?"
-    params = [pump_device_id]
+    query = "SELECT * FROM pump_sessions WHERE (pump_device_id = ? OR pump_device_id = 'PUMP-SOLAR-1001' OR ? = 'PUMP-SOLAR-1001')"
+    params = [pump_device_id, pump_device_id]
     
     if search_query:
         query += " AND (date LIKE ? OR start_time LIKE ? OR end_time LIKE ? OR status LIKE ?)"
@@ -188,14 +188,13 @@ def get_daily_summary(pump_device_id="PUMP-SOLAR-1001"):
                 date,
                 COUNT(id) as total_runs,
                 SUM(duration_minutes) as total_duration_mins,
-                SUM(energy_kwh) as total_energy_kwh,
-                AVG(avg_power) as avg_power_w
+                SUM(duration_seconds) as total_duration_secs,
+                SUM(energy_kwh) as total_energy_kwh
             FROM pump_sessions
-            WHERE pump_device_id = ?
+            WHERE (pump_device_id = ? OR pump_device_id = 'PUMP-SOLAR-1001' OR ? = 'PUMP-SOLAR-1001')
             GROUP BY date
             ORDER BY date DESC
-            LIMIT 14
-        ''', (pump_device_id,))
+        ''', (pump_device_id, pump_device_id))
         rows = cursor.fetchall()
         for r in rows:
             tot_mins = r['total_duration_mins'] or 0.0
