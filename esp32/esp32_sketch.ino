@@ -23,7 +23,7 @@
 #include "soc/rtc_cntl_reg.h"
 
 // 1. Wi-Fi Credentials (make sure phone hotspot band is 2.4 GHz)
-const char* ssid = "IQOO";
+const char* ssid = "Redmi Note 9 Pro Max";
 const char* password = "12345678";
 
 // 2. Server Gateway URL (Your Live Render Cloud Server)
