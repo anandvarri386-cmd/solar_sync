@@ -10,6 +10,7 @@
  * DC Supply & Wi-Fi Stability Enhancements:
  * - Hardware Brownout Detector disabled (prevents resets on cold DC boot)
  * - Wi-Fi RF Power optimized to 15dBm to eliminate current spikes
+ * - Safe 512-byte JSON memory buffers for ArduinoJson v6/v7 compatibility
  */
 
 #include <WiFi.h>
@@ -45,6 +46,7 @@ const int RELAY_PIN = 26;   // Relay Control Signal -> GPIO 26
 int targetStatus = 0;
 int pumpStatus = 0;
 unsigned long lastTelemetryTime = 0;
+unsigned long lastReconnectAttempt = 0;
 double cumulativeRuntimeSeconds = 0.0;
 double cumulativeEnergyKWh = 0.0;
 
@@ -59,8 +61,13 @@ void setup() {
   // 1. Disable hardware brownout detector to prevent restart during Wi-Fi surge on DC supply
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
 
+  // Glitch-free relay initialization (set level BEFORE setting as output)
+  digitalWrite(RELAY_PIN, RELAY_OFF);
+  pinMode(RELAY_PIN, OUTPUT);
+  digitalWrite(RELAY_PIN, RELAY_OFF);
+
   Serial.begin(115200);
-  delay(1000);
+  delay(500);
   
   Serial.println("\n==============================================");
   Serial.println("  SolarSync Commercial ESP32 IoT Node");
@@ -69,23 +76,18 @@ void setup() {
   Serial.print("Device ID: ");
   Serial.println(deviceId);
   
-  // Initialize Relay pin and turn OFF immediately on boot
-  pinMode(RELAY_PIN, OUTPUT);
-  digitalWrite(RELAY_PIN, RELAY_OFF); // HIGH = Relay is OFF (Open)
-  
-  // Set ADC attenuation to 11dB (allows full scale 0 - 3.3V ADC reading on ESP32)
-  analogSetPinAttenuation(VOLTAGE_PIN, ADC_11db);
-  analogSetPinAttenuation(CURRENT_PIN, ADC_11db);
+  // Set global ADC attenuation to 11dB (allows full scale 0 - 3.3V ADC reading on ESP32)
+  analogSetAttenuation(ADC_11db);
   
   // Auto-calibrate ACS712 zero baseline before starting pump
   calibrateCurrentSensor();
   
   // Clean Wi-Fi state & set station mode
   WiFi.disconnect(true);
-  delay(150);
+  delay(100);
   WiFi.mode(WIFI_STA);
 
-  // 2. Reduce Wi-Fi TX Power to 15dBm (prevents severe voltage drop on VIN pin while maintaining strong connection)
+  // 2. Set Wi-Fi TX Power to 15dBm (prevents voltage drop on DC supply while keeping strong range)
   WiFi.setTxPower(WIFI_POWER_15dBm);
   
   Serial.print("Connecting to Wi-Fi hotspot: ");
@@ -93,8 +95,8 @@ void setup() {
   WiFi.begin(ssid, password);
   
   int attempts = 0;
-  while (WiFi.status() != WL_CONNECTED && attempts < 50) {
-    delay(400);
+  while (WiFi.status() != WL_CONNECTED && attempts < 40) {
+    delay(300);
     Serial.print(".");
     attempts++;
   }
@@ -106,10 +108,7 @@ void setup() {
     Serial.print("Cloud Server Gateway: ");
     Serial.println(serverUrl);
   } else {
-    Serial.println("\n[ERROR] Could not connect to Wi-Fi hotspot.");
-    Serial.println("-> Check: 1) Phone Hotspot band MUST be 2.4 GHz.");
-    Serial.println("-> Check: 2) Supply voltage on VIN pin is at least 5.0V (not 3.3V).");
-    Serial.println("-> Check: 3) Add a 100uF - 470uF capacitor across VIN and GND.");
+    Serial.println("\n[WARNING] Wi-Fi connecting in background...");
   }
 }
 
@@ -133,15 +132,17 @@ void calibrateCurrentSensor() {
 }
 
 void loop() {
-  // If disconnected, attempt auto-reconnect
+  unsigned long now = millis();
+
+  // Non-blocking auto-reconnect if Wi-Fi drops
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("Wi-Fi disconnected. Reconnecting...");
-    WiFi.reconnect();
-    delay(3000);
+    if (now - lastReconnectAttempt > 5000) {
+      lastReconnectAttempt = now;
+      Serial.println("[Wi-Fi] Reconnecting to hotspot...");
+      WiFi.reconnect();
+    }
     return;
   }
-  
-  unsigned long now = millis();
   
   // Trigger telemetry send every 1000ms (1 second)
   if (now - lastTelemetryTime >= 1000) {
@@ -153,7 +154,6 @@ void loop() {
     double current = readCurrent();
     
     // 2. Determine Pump Status:
-    // When current is 1.0 Amp or more, status is RUNNING (1)
     if (current >= 1.0 || targetStatus == 1) {
       pumpStatus = 1;
     } else {
@@ -171,6 +171,9 @@ void loop() {
     
     // 5. Transmit telemetry to Render Cloud Server
     transmitTelemetry(voltage, current, power);
+
+    // 6. Enforce physical relay state based on targetStatus
+    digitalWrite(RELAY_PIN, (targetStatus == 1) ? RELAY_ON : RELAY_OFF);
   }
 }
 
@@ -201,7 +204,6 @@ double readCurrent() {
   double sensorVolts = (avgADC / 4095.0) * 3.3;
   
   // Dynamic Zero-Current Drift Auto-Tracking when Relay is OFF
-  // Automatically compensates for power supply ripple & Wi-Fi voltage drops
   if (targetStatus == 0) {
     if (abs(sensorVolts - zeroCurrentVoltage) < 0.25) {
       zeroCurrentVoltage = (zeroCurrentVoltage * 0.90) + (sensorVolts * 0.10);
@@ -213,8 +215,6 @@ double readCurrent() {
   double measuredCurrent = (voltageDiff / 0.100) + currentSensorOffset;
   
   // Clean Deadband Noise Filter:
-  // When relay is OFF, clamp any drift under 0.8A to 0.00A
-  // When relay is ON, filter out sub-0.35A idle ripple
   if (measuredCurrent < 0.35 || (targetStatus == 0 && measuredCurrent < 0.80)) {
     measuredCurrent = 0.0;
   }
@@ -229,10 +229,10 @@ void transmitTelemetry(double voltage, double current, double power) {
   HTTPClient http;
   http.begin(client, serverUrl);
   http.addHeader("Content-Type", "application/json");
-  http.setTimeout(5000); // 5s timeout for cloud
+  http.setTimeout(4000); // 4s timeout for cloud
   
-  // Build JSON Document with Device Authentication
-  StaticJsonDocument<256> doc;
+  // Build JSON Document with Device Authentication (512 bytes safe buffer)
+  StaticJsonDocument<512> doc;
   doc["device_id"]   = deviceId;
   doc["api_key"]     = apiKey;
   doc["voltage"]     = voltage;
@@ -249,7 +249,7 @@ void transmitTelemetry(double voltage, double current, double power) {
   
   if (httpResponseCode > 0) {
     String response = http.getString();
-    StaticJsonDocument<256> resDoc;
+    StaticJsonDocument<512> resDoc;
     DeserializationError error = deserializeJson(resDoc, response);
     
     if (!error) {
