@@ -23,8 +23,8 @@
 #include "soc/rtc_cntl_reg.h"
 
 // 1. Wi-Fi Credentials (make sure phone hotspot band is 2.4 GHz)
-const char* ssid = "realme P1 5G";
-const char* password = "Anand123";
+const char* ssid = "IQOO";
+const char* password = "12345678";
 
 // 2. Server Gateway URL (Your Live Render Cloud Server)
 const char* serverUrl = "https://solar-sync.onrender.com/api/esp32/data";

@@ -5,8 +5,8 @@ CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 
 DEFAULT_CONFIG = {
     "pump_name": "Smart Solar Pump AI",
-    "wifi_ssid": "SolarSync_Net",
-    "wifi_password": "solarpumppass",
+    "wifi_ssid": "IQOO",
+    "wifi_password": "12345678",
     "voltage_calibration": 1.0,
     "current_offset": 0.0,
     "web_simulation_enabled": True
